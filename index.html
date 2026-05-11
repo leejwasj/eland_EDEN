@@ -1160,6 +1160,39 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
   <div class="empty-v" id="t1-empty"><div class="empty-v-ring"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg></div><div class="empty-v-title">브랜드를 입력하세요</div><div class="empty-v-sub">전국이랜드 점포 중 해당 브랜드가 가장 경쟁력 있는 곳을 순위로 보여드립니다</div></div>
   <div id="t1-res" style="display:none">
     <div class="panel"><div class="ph" id="t1-title">추천 점포 순위</div><div id="t1-list"></div></div>
+
+    <!-- 매출 시뮬레이션 -->
+    <div class="panel" id="t1-sim-panel" style="margin-top:14px">
+      <div class="ph">매출 시뮬레이션</div>
+      <div style="font-size:12px;color:var(--text-sec);margin-bottom:14px">추천 점포 중 하나를 선택해 예상 매출과 손익을 시뮬레이션합니다.</div>
+      <div class="fgrid" style="margin-bottom:14px">
+        <div class="fg" style="grid-column:span 2">
+          <label>분석 점포</label>
+          <select id="sim-store"></select>
+        </div>
+        <div class="fg">
+          <label>임차 면적 (m²)</label>
+          <input type="number" id="sim-area" placeholder="예: 100" value="100" min="10" max="3000">
+        </div>
+        <div class="fg">
+          <label>월 임대료 (만원)</label>
+          <input type="number" id="sim-rent" placeholder="예: 500" value="300" min="0">
+        </div>
+        <div class="fg" style="grid-column:span 2">
+          <label>카테고리 마진율</label>
+          <select id="sim-margin">
+            <option value="0.45">뷰티·코스메틱 (45%)</option>
+            <option value="0.40">패션의류 (40%)</option>
+            <option value="0.35" selected>패션잡화 (35%)</option>
+            <option value="0.30">스포츠·아웃도어 (30%)</option>
+            <option value="0.25">SPA·패스트패션 (25%)</option>
+            <option value="0.20">식음료·F&B (20%)</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-g" onclick="runSalesSimulation()" id="sim-btn">시뮬레이션 실행</button>
+      <div id="sim-result" style="margin-top:20px"></div>
+    </div>
   </div>
 </section>
 
@@ -2139,9 +2172,160 @@ async function runBrandToStore(){
         <div style="font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">이미 입점된 점포 (추천 제외)</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">${alreadyIn.map(r=>`<span style="padding:3px 10px;border-radius:9999px;font-size:11px;background:rgba(255,255,255,.05);color:var(--text-dim);border:1px solid rgba(255,255,255,.08)">${r.name}</span>`).join('')}</div>
       </div>`:'');
+    // 시뮬레이션 패널 — 추천 점포 목록 주입 후 표시
+    populateSimStore(ranked);
+    document.getElementById('sim-result').innerHTML = '';
     document.getElementById('t1-res').scrollIntoView({behavior:'smooth'});
   }catch(err){console.error(err);alert('오류: '+err.message);}
   finally{hlv();btn.disabled=false;}
+}
+
+// ── 매출 시뮬레이션 ──
+const SIM_INCOME_MULT = {
+  'A+':1.30,'A':1.22,'A-':1.15,'B+':1.08,'B':1.00,'B-':0.95,'C+':0.90,'C':0.85,'D+':0.78,'D':0.70
+};
+
+function populateSimStore(ranked) {
+  const sel = document.getElementById('sim-store');
+  if (!sel || !ranked.length) return;
+  sel.innerHTML = ranked.map((r, i) =>
+    `<option value="${r.name}" data-score="${r.score}">${i+1}위 &nbsp;${r.name}&nbsp; (경쟁점수 ${r.score}/40)</option>`
+  ).join('');
+}
+
+function runSalesSimulation() {
+  const storeEl = document.getElementById('sim-store');
+  const storeName = storeEl?.value;
+  if (!storeName) return;
+  const score    = parseInt(storeEl.selectedOptions[0]?.dataset.score ?? 20);
+  const area     = parseFloat(document.getElementById('sim-area').value)   || 100;
+  const rent     = parseFloat(document.getElementById('sim-rent').value)   || 0;
+  const margin   = parseFloat(document.getElementById('sim-margin').value) || 0.35;
+
+  const sd   = STORES[storeName];
+  const info = STORE_AREA_INFO[storeName] || { incomeGrade:'C' };
+  if (!sd) return;
+
+  // ── 기본 평당 월매출 ──
+  // avg=100(강남) → 30만원/m², avg=60(지방) → 18만원/m²
+  const basePerM2 = sd.avg * 0.30;
+
+  // ── 보정 계수 ──
+  const incomeMult = SIM_INCOME_MULT[info.incomeGrade] || 1.0;
+  const compMult   = score >= 32 ? 1.20 : score >= 24 ? 1.10 : score >= 16 ? 1.00 : 0.88;
+
+  // ── 예상 월매출 ──
+  const expectedBase = basePerM2 * area * incomeMult * compMult;
+  const expectedMin  = Math.round(expectedBase * 0.75);
+  const expectedMid  = Math.round(expectedBase);
+  const expectedMax  = Math.round(expectedBase * 1.30);
+
+  // ── 손익 ──
+  const monthlyGross  = Math.round(expectedMid * margin);
+  const monthlyOpProfit = monthlyGross - rent;
+  const annualSales     = expectedMid * 12;
+
+  // ── 초기 투자비 추정 (인테리어+보증금) ──
+  const initialInvest = Math.round(area * 480);   // 평균 480만원/m²
+
+  // ── 손익분기 ──
+  const bepMonths = monthlyOpProfit > 0
+    ? Math.ceil(initialInvest / monthlyOpProfit)
+    : null;
+
+  // ── 리스크 등급 ──
+  let riskGrade;
+  if (!bepMonths || bepMonths > 60)      riskGrade = 'D';
+  else if (bepMonths <= 18)              riskGrade = 'A';
+  else if (bepMonths <= 30)              riskGrade = 'B';
+  else                                   riskGrade = 'C';
+
+  renderSimResult({ storeName, area, rent, margin, score,
+    expectedMin, expectedMid, expectedMax,
+    monthlyGross, monthlyOpProfit, initialInvest,
+    bepMonths, annualSales, riskGrade, info });
+}
+
+function renderSimResult(d) {
+  const el = document.getElementById('sim-result');
+  if (!el) return;
+
+  const fmt = n => {
+    const abs = Math.abs(n);
+    if (abs >= 10000) return `${(n/10000).toFixed(1)}억원`;
+    if (abs >= 1000)  return `${(n/1000).toFixed(1)}천만원`;
+    return `${Math.round(n)}만원`;
+  };
+
+  const RISK_COLOR = { A:'#22c55e', B:'#3b82f6', C:'#f59e0b', D:'#ef4444' };
+  const RISK_LABEL = { A:'저위험', B:'보통', C:'주의', D:'고위험' };
+  const rc = RISK_COLOR[d.riskGrade];
+  const profitColor = d.monthlyOpProfit >= 0 ? '#22c55e' : '#ef4444';
+  const bepColor    = !d.bepMonths ? '#ef4444'
+                    : d.bepMonths <= 24 ? '#22c55e'
+                    : d.bepMonths <= 36 ? '#f59e0b' : '#ef4444';
+
+  el.innerHTML = `
+    <div style="padding:12px 14px;background:rgba(30,215,96,.06);border-radius:10px;
+      border:1px solid rgba(30,215,96,.15);margin-bottom:16px">
+      <div style="font-size:10px;font-weight:700;color:var(--green);letter-spacing:.06em;
+        text-transform:uppercase;margin-bottom:4px">시뮬레이션 결과 — ${d.storeName}</div>
+      <div style="font-size:11px;color:var(--text-sec)">
+        면적 ${d.area}㎡ &nbsp;·&nbsp; 임대료 ${d.rent}만원/월 &nbsp;·&nbsp; 마진 ${Math.round(d.margin*100)}%
+      </div>
+    </div>
+
+    <!-- 6 KPI 타일 -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">
+      ${[
+        ['예상 월매출',   fmt(d.expectedMid),                     '#fff',        `${fmt(d.expectedMin)}~${fmt(d.expectedMax)}`],
+        ['예상 연매출',   fmt(d.annualSales),                     '#fff',        '중간값 기준'],
+        ['월 영업이익',   (d.monthlyOpProfit>=0?'+':'')+fmt(d.monthlyOpProfit), profitColor, d.monthlyOpProfit>=0?'흑자 예상':'적자 주의'],
+        ['초기 투자비',   fmt(d.initialInvest),                   '#fff',        '인테리어+보증금 추정'],
+        ['손익분기점',    d.bepMonths ? `${d.bepMonths}개월`:'미달성', bepColor, d.bepMonths ? `약 ${(d.bepMonths/12).toFixed(1)}년`:'수익성 부족'],
+        ['리스크 등급',   d.riskGrade,                            rc,            RISK_LABEL[d.riskGrade]],
+      ].map(([lbl,val,col,sub]) => `
+        <div style="background:var(--surface-3);border-radius:10px;padding:12px 8px;
+          border:1px solid var(--border);text-align:center">
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+            color:var(--text-sec);margin-bottom:6px">${lbl}</div>
+          <div style="font-size:${lbl==='리스크 등급'?'26':'15'}px;font-weight:800;color:${col};line-height:1.2">${val}</div>
+          <div style="font-size:9px;color:var(--text-dim);margin-top:4px">${sub}</div>
+        </div>`).join('')}
+    </div>
+
+    <!-- 시나리오 바차트 -->
+    <div style="padding:14px;background:var(--surface-3);border-radius:10px;
+      border:1px solid var(--border);margin-bottom:14px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+        color:var(--text-sec);margin-bottom:12px">월매출 시나리오</div>
+      ${[
+        ['보수적 (−25%)', d.expectedMin, '#ef4444'],
+        ['기본값',        d.expectedMid, '#3b82f6'],
+        ['낙관적 (+30%)', d.expectedMax, '#22c55e'],
+      ].map(([lbl,val,col]) => `
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div style="font-size:11px;color:var(--text-sec);width:92px;flex-shrink:0">${lbl}</div>
+          <div style="flex:1;height:7px;background:rgba(255,255,255,.07);border-radius:9999px;overflow:hidden">
+            <div style="height:100%;width:${(val/d.expectedMax*100).toFixed(0)}%;background:${col};
+              border-radius:9999px;transition:width .8s ease"></div>
+          </div>
+          <div style="font-size:13px;font-weight:700;color:${col};min-width:72px;text-align:right">${fmt(val)}</div>
+        </div>`).join('')}
+    </div>
+
+    <div style="font-size:10px;color:var(--text-dim);padding-top:8px;border-top:1px solid var(--border)">
+      ※ 상권지수·소득수준·경쟁밀도 기반 추정치이며 실제 매출과 차이가 있을 수 있습니다.
+    </div>
+  `;
+
+  // 바 애니메이션
+  setTimeout(() => {
+    el.querySelectorAll('[style*="transition:width"]').forEach(b => {
+      const w = b.style.width; b.style.width = '0';
+      requestAnimationFrame(() => { b.style.width = w; });
+    });
+  }, 50);
 }
 
 // ── TAB 2: Store → Brand (5-Step Real Logic) ──

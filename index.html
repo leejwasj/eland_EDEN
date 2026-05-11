@@ -3026,11 +3026,17 @@ function scoreRecommendations(brandFreq, nearbyBrands, store, demographics) {
     const nearbyBrand = nearbyInCat[brand];
     if (nearbyBrand && nearbyBrand.minRadius <= 1500) continue;
 
-    // Filter 2: 이미 입점
+    // Filter 2: 이미 입점 (짧은 브랜드명 K2, GS 등도 부분일치 처리)
     const bl = brand.toLowerCase().replace(/\s/g, '');
-    const alreadyIn = [...enteredBrands].some(b =>
-      b === bl || (bl.length >= 3 && (b.includes(bl) || bl.includes(b)))
-    );
+    const alreadyIn = [...enteredBrands].some(b => {
+      if (b === bl) return true;
+      if (bl.length < 2) return false;
+      // 입점 브랜드명이 추천 브랜드를 포함 (예: 입점 "K2키즈" ⊃ 추천 "K2")
+      if (b.includes(bl)) return true;
+      // 추천 브랜드가 입점 브랜드를 포함 (3자 이상에서만 — 짧으면 오탐 위험)
+      if (bl.length >= 3 && bl.includes(b) && b.length >= 2) return true;
+      return false;
+    });
     if (alreadyIn) continue;
 
     let score = 0;

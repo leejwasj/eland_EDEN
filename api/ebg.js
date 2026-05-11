@@ -10,14 +10,23 @@ export default async function handler(req, res) {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) return res.status(503).json({ error: 'ANTHROPIC_API_KEY 없음 — Vercel 환경변수를 확인하세요' });
 
-  const { image, brand } = req.body || {};
-  if (!image) return res.status(400).json({ error: 'image 필드 필요' });
+  const { image, images, brand } = req.body || {};
+  const imgList = Array.isArray(images) && images.length ? images : (image ? [image] : []);
+  if (!imgList.length) return res.status(400).json({ error: 'image 또는 images 필드 필요' });
+  if (imgList.length > 5) return res.status(400).json({ error: '최대 5장까지 업로드 가능합니다' });
 
-  const match = image.match(/^data:(image\/\w+);base64,(.+)$/);
-  if (!match) return res.status(400).json({ error: '유효하지 않은 이미지 형식' });
-  const [, mimeType, base64Data] = match;
+  const imageBlocks = [];
+  for (const img of imgList) {
+    const m = img.match(/^data:(image\/\w+);base64,(.+)$/);
+    if (!m) return res.status(400).json({ error: '유효하지 않은 이미지 형식' });
+    imageBlocks.push({ type: 'image', source: { type: 'base64', media_type: m[1], data: m[2] } });
+  }
 
-  const prompt = `이 문서는 이랜드리테일 MD가 브랜드 키맨을 직접 만나고 작성한 EBG(External Brand Group) 미팅 보고서입니다.${brand ? ` 브랜드명: ${brand}` : ''}
+  const multiNote = imgList.length > 1
+    ? `\n\n이번 EBG는 총 ${imgList.length}장의 자료로 구성되어 있습니다. 모든 페이지를 종합하여 하나의 통합 분석을 작성하세요.`
+    : '';
+
+  const prompt = `이 문서는 이랜드리테일 MD가 브랜드 키맨을 직접 만나고 작성한 EBG(External Brand Group) 미팅 보고서입니다.${brand ? ` 브랜드명: ${brand}` : ''}${multiNote}
 
 EBG 보고서 구조:
 - 목표: 브랜드의 핵심 목표
@@ -28,8 +37,11 @@ EBG 보고서 구조:
 
 문서 전체를 읽고 아래 JSON 형식으로만 응답하세요. 없는 항목은 null 또는 빈 배열로 처리하세요.
 
+특히 "summary" 필드는 이 EBG 미팅 전체를 MD 관점에서 3~5문장으로 요약한 핵심 줄거리를 적으세요. (브랜드 현황, 키맨의 핵심 메시지, MD에게 시사하는 바)
+
 {
   "brandName": "문서에서 추출한 브랜드명 (예: DJI, 팝마트, 올리브영)",
+  "summary": "EBG 미팅 종합 요약 3~5문장",
   "goal": "목표 한 줄",
   "ebgContext": "EBG 진행한 것 요약",
   "keyQuestion": "핵심질문 전문",
@@ -57,8 +69,11 @@ EBG 보고서 구조:
 반드시 JSON만 반환하세요. 마크다운 코드블록(\`\`\`) 없이 순수 JSON으로만 응답하세요.`;
 
   try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 25000);
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
+      signal: ctrl.signal,
       headers: {
         'x-api-key': key,
         'anthropic-version': '2023-06-01',
@@ -66,16 +81,14 @@ EBG 보고서 구조:
       },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 2048,
+        max_tokens: 2500,
         messages: [{
           role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64Data } },
-            { type: 'text', text: prompt }
-          ]
+          content: [...imageBlocks, { type: 'text', text: prompt }]
         }]
       })
     });
+    clearTimeout(timer);
 
     if (!r.ok) {
       const err = await r.json().catch(() => ({}));

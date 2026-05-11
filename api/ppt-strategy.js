@@ -10,11 +10,18 @@ export default async function handler(req, res) {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) return res.status(503).json({ error: 'ANTHROPIC_API_KEY 없음' });
 
-  const { ebgAnalysis, brand, store } = req.body || {};
+  const { ebgAnalysis, brand, store, references = [] } = req.body || {};
   if (!ebgAnalysis) return res.status(400).json({ error: 'ebgAnalysis 필드 필요' });
 
+  const refBlock = references.length ? `\n추가 레퍼런스 자료 분석 결과:\n${references.map((r, i) =>
+    `[레퍼런스 ${i+1}] ${r.fileName || ''} (${r.documentType || '자료'})\n` +
+    `핵심 인사이트: ${(r.keyInsights||[]).join(' / ')}\n` +
+    `전략적 시사점: ${(r.strategicPoints||[]).join(' / ')}\n` +
+    `주요 데이터: ${(r.dataHighlights||[]).join(' / ')}`
+  ).join('\n\n')}` : '';
+
   const prompt = `다음은 ${brand || '브랜드'} 브랜드의 키맨 EBG(External Brand Group) 미팅 분석 결과입니다.
-${store ? `분석 대상 점포: ${store}` : ''}
+${store ? `분석 대상 점포: ${store}` : ''}${refBlock}
 
 EBG 분석 데이터:
 ${JSON.stringify(ebgAnalysis, null, 2)}

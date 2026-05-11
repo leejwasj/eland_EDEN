@@ -5457,46 +5457,78 @@ function renderEbgAnalysis(a) {
     matched = matched.sort((a, b) => b[1].avg - a[1].avg).slice(0, 5);
 
     if (matched.length) {
-      const sc = a.storeConditions || {};
-      parts.push(`
-        <div style="font-size:9px;font-weight:800;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">추천 입점 점포</div>
-        ${matched.map(([name, info]) => {
-          const areaInfo = (typeof STORE_AREA_INFO !== 'undefined' && STORE_AREA_INFO[name]) || {};
-          const inPreferred = preferredAreas.length && preferredAreas.some(area =>
-            name.includes(area) || (areaInfo.district||'').includes(area));
-          const avgScore = info.avg;
-          const incGrade = areaInfo.incomeGrade || '—';
-          const incLbl = areaInfo.incomeLbl || '';
+      // 선호지역 매칭 여부로 분리
+      const withReason = matched.map(([name, info]) => {
+        const areaInfo = (typeof STORE_AREA_INFO !== 'undefined' && STORE_AREA_INFO[name]) || {};
+        const matchedAreas = preferredAreas.filter(area =>
+          name.includes(area) || (areaInfo.district||'').includes(area) || (areaInfo.city||'').includes(area));
+        const inPreferred = matchedAreas.length > 0;
+        return { name, info, areaInfo, matchedAreas, inPreferred };
+      });
 
-          // 점수 근거 태그
-          const reasons = [
-            { label:'상권지수', desc:`${avgScore}점/100`, color: avgScore>=80?'var(--green)':avgScore>=60?'#53d5f2':'#F97316' },
-            incGrade !== '—' ? { label:'소득등급', desc:`${incGrade}${incLbl?' ('+incLbl+')':''}`, color:'#C0A882' } : null,
-            inPreferred ? { label:'선호지역 매칭', desc: preferredAreas.filter(area=>name.includes(area)||(areaInfo.district||'').includes(area)).join('·'), color:'var(--green)' } : null,
-            isPremium && avgScore>=80 ? { label:'프리미엄 상권', desc:'EBG 조건 부합', color:'#FF6432' } : null,
-            isLarge && avgScore>=60 ? { label:'대형 복합몰', desc:'EBG 조건 부합', color:'#FF6432' } : null,
-            areaInfo.ageCore ? { label:'핵심 연령대', desc:areaInfo.ageCore, color:'var(--text-sec)' } : null,
-          ].filter(Boolean);
+      const preferred = withReason.filter(r => r.inPreferred);
+      const others    = withReason.filter(r => !r.inPreferred);
 
-          return `
-          <div class="ebg-fit-card" style="${inPreferred?'border-color:rgba(30,215,96,.35);background:rgba(30,215,96,.04)':''}">
-            <div class="ebg-fit-score" style="${avgScore>=80?'border-color:var(--green);color:var(--green)':avgScore>=60?'border-color:#53d5f2;color:#53d5f2':'border-color:#F97316;color:#F97316'}">${avgScore}</div>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:13px;font-weight:600;color:#fff;margin-bottom:5px">
-                ${name}${inPreferred?' <span style="font-size:10px;font-weight:700;color:var(--green);background:rgba(30,215,96,.12);padding:1px 7px;border-radius:9999px;border:1px solid rgba(30,215,96,.25)">선호지역 ✓</span>':''}
-              </div>
-              <div style="font-size:10px;color:var(--text-dim);margin-bottom:5px">${areaInfo.district||''} ${areaInfo.city||''}</div>
-              <div style="display:flex;flex-wrap:wrap;gap:4px">
-                ${reasons.map(re=>`
-                  <span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:6px;
-                    background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);font-size:10px">
-                    <span style="color:var(--text-dim)">${re.label}</span>
-                    <span style="color:${re.color};font-weight:600">${re.desc}</span>
-                  </span>`).join('')}
-              </div>
+      const renderCard = ({ name, info, areaInfo, matchedAreas, inPreferred }) => {
+        const avgScore = info.avg;
+        const incGrade = areaInfo.incomeGrade || '—';
+        const incLbl   = areaInfo.incomeLbl || '';
+        const reasons  = [
+          { label:'상권지수',  desc:`${avgScore}점/100`, color: avgScore>=80?'var(--green)':avgScore>=60?'#53d5f2':'#F97316' },
+          incGrade !== '—' ? { label:'소득등급', desc:`${incGrade}${incLbl?' ('+incLbl+')':''}`, color:'#C0A882' } : null,
+          isPremium && avgScore>=80 ? { label:'프리미엄 상권', desc:'EBG 조건 부합', color:'#FF6432' } : null,
+          isLarge  && avgScore>=60 ? { label:'대형 복합몰',   desc:'EBG 조건 부합', color:'#FF6432' } : null,
+          areaInfo.ageCore ? { label:'핵심 연령대', desc:areaInfo.ageCore, color:'var(--text-sec)' } : null,
+        ].filter(Boolean);
+
+        return `
+        <div class="ebg-fit-card" style="${inPreferred?'border-color:rgba(30,215,96,.4);background:rgba(30,215,96,.05)':'border-color:rgba(255,255,255,.07)'}">
+          <div class="ebg-fit-score" style="${avgScore>=80?'border-color:var(--green);color:var(--green)':avgScore>=60?'border-color:#53d5f2;color:#53d5f2':'border-color:#F97316;color:#F97316'}">${avgScore}</div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">
+              <span style="font-size:13px;font-weight:600;color:#fff">${name}</span>
+              ${matchedAreas.map(area=>`
+                <span style="font-size:10px;font-weight:700;color:var(--green);background:rgba(30,215,96,.12);
+                  padding:1px 7px;border-radius:9999px;border:1px solid rgba(30,215,96,.3)">📍 ${area}</span>`).join('')}
             </div>
-          </div>`;
-        }).join('')}`);
+            <div style="font-size:10px;color:var(--text-dim);margin-bottom:5px">${areaInfo.district||''} ${areaInfo.city||''}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px">
+              ${reasons.map(re=>`
+                <span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:6px;
+                  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);font-size:10px">
+                  <span style="color:var(--text-dim)">${re.label}</span>
+                  <span style="color:${re.color};font-weight:600">${re.desc}</span>
+                </span>`).join('')}
+            </div>
+          </div>
+        </div>`;
+      };
+
+      let storeHTML = '';
+
+      if (preferred.length) {
+        storeHTML += `
+          <div style="font-size:9px;font-weight:800;color:var(--green);letter-spacing:.1em;
+            text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:6px">
+            <span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block"></span>
+            EBG 선호지역 매칭 (${preferred.length}개)
+          </div>
+          ${preferred.map(renderCard).join('')}`;
+      }
+
+      if (others.length) {
+        storeHTML += `
+          <div style="font-size:9px;font-weight:800;color:var(--text-dim);letter-spacing:.1em;
+            text-transform:uppercase;margin:${preferred.length?'14px':0} 0 6px;display:flex;align-items:center;gap:6px">
+            <span style="width:6px;height:6px;border-radius:50%;background:var(--text-dim);display:inline-block"></span>
+            상권지수 기반 추천 (${others.length}개)
+          </div>
+          ${others.map(renderCard).join('')}`;
+      }
+
+      parts.push(`
+        <div style="font-size:9px;font-weight:800;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px">추천 입점 점포</div>
+        ${storeHTML}`);
     }
   }
 

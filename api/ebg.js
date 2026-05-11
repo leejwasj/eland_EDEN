@@ -55,7 +55,14 @@ EBG 보고서 구조:
 반드시 JSON만 반환하세요. 마크다운 코드블록(\`\`\`) 없이 순수 JSON으로만 응답하세요.`;
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`;
+    // 사용 가능한 모델 먼저 확인
+    const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+    const listData = await listRes.json();
+    const availableModels = (listData.models || []).map(m => m.name);
+    const flashModel = availableModels.find(n => n.includes('flash')) || availableModels[0];
+    if (!flashModel) return res.status(503).json({ error: '사용 가능한 모델 없음', availableModels });
+    const modelId = flashModel.replace('models/', '');
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${key}`;
 
     const r = await fetch(url, {
       method: 'POST',

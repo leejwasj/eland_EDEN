@@ -536,6 +536,40 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
 .kw-prod-price{font-size:12px;font-weight:700;color:var(--green)}
 .kw-prod-mall{font-size:10px;color:var(--text-dim);margin-top:2px}
 
+/* ── 전략 PPT ── */
+.ppt-layout{display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start}
+@media(max-width:900px){.ppt-layout{grid-template-columns:1fr}}
+.ppt-step-label{font-size:10px;font-weight:800;color:var(--green);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+.dart-upload-zone{border:1.5px dashed var(--border-mid);border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:border-color .15s;background:var(--surface-2)}
+.dart-upload-zone:hover,.dart-upload-zone.over{border-color:var(--green);background:rgba(30,215,96,.04)}
+.dart-upload-zone input{display:none}
+.ppt-news-list-box{max-height:190px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--surface-2)}
+.ppt-news-row{padding:7px 0;border-bottom:1px solid var(--border);font-size:11px;color:var(--text-sec);line-height:1.5}
+.ppt-news-row:last-child{border-bottom:none}
+.ppt-gen-btn{width:100%;padding:14px;background:var(--green);color:#000;border:none;border-radius:9999px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:-.1px}
+.ppt-gen-btn:hover{background:#17c653;transform:translateY(-1px)}
+.ppt-gen-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.ppt-dl-btn{padding:10px 24px;background:#0f172a;color:#fff;border:none;border-radius:9999px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all .2s}
+.ppt-dl-btn:hover:not(:disabled){background:#1e293b;transform:translateY(-1px)}
+.ppt-dl-btn:disabled{opacity:.4;cursor:not-allowed}
+.ppt-snav{padding:6px 14px;border-radius:9999px;border:1px solid var(--border);background:transparent;color:var(--text-sec);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.ppt-snav.on{background:var(--green);color:#000;border-color:var(--green)}
+.ppt-snav:hover:not(.on){border-color:var(--border-mid);color:#fff}
+.ppt-canvas{width:100%;aspect-ratio:16/9;border-radius:6px;overflow:hidden;position:relative;background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.5)}
+.ppt-slide{width:100%;height:100%;display:flex;flex-direction:column;font-family:'Noto Sans KR',sans-serif}
+.ppt-head{padding:12px 20px;flex-shrink:0}
+.ppt-head-eye{font-size:7px;font-weight:800;letter-spacing:2px;text-transform:uppercase;margin-bottom:3px;opacity:.85}
+.ppt-head-title{font-size:16px;font-weight:800;color:#fff;line-height:1.2}
+.ppt-body{flex:1;padding:14px 20px;overflow:hidden;background:#f8fafc}
+.ppt-kpi-grid{display:grid;gap:7px;margin-bottom:8px}
+.ppt-kpi{background:#fff;border-radius:5px;padding:9px 11px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.ppt-kpi-lbl{font-size:7px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px}
+.ppt-kpi-val{font-size:15px;font-weight:800;color:#0f172a;line-height:1}
+.ppt-kpi-sub{font-size:7px;color:#94a3b8;margin-top:2px}
+.ppt-section-title{font-size:7px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;padding-bottom:3px}
+.ppt-insight-box{border-radius:5px;padding:9px 11px;margin-bottom:8px}
+.ppt-action-row{padding:6px 10px;background:#fff;border-radius:0 4px 4px 0;font-size:9px;color:#0f172a;margin-bottom:4px;display:flex;gap:7px;align-items:flex-start;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.ppt-empty-hint{display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-dim);font-size:12px;text-align:center;line-height:1.7}
 
 /* ── Store Selection Grid ── */
 .store-home{padding:0 0 60px}
@@ -697,6 +731,7 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
 .cat-bar-cnt{font-size:11px;color:var(--text-sec);min-width:54px;text-align:right}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 </head>
 <body>
 <div class="bg-orb bg-orb-1"></div>
@@ -721,6 +756,7 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
   <button class="nb" onclick="goTab(6)">온라인 채널</button>
   <button class="nb" onclick="goTab(7)" style="display:none">온라인 베스트</button>
   <button class="nb" onclick="goTab(8)">키맨 EBG</button>
+  <button class="nb" onclick="goTab(9)">전략 PPT</button>
 </nav>
 
 <main class="main">
@@ -1437,6 +1473,114 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
   </div>
 </section>
 
+<!-- TAB 9: 전략 PPT -->
+<section class="tsec" id="tab-ppt">
+  <div class="tab-hero">
+    <div class="tab-hero-eye">STRATEGY PPT</div>
+    <h1 class="tab-hero-h">전략 <span class="hl">PPT 생성</span></h1>
+    <p class="tab-hero-p">상권·점포 분석과 키맨 EBG 인사이트를 바탕으로 브랜드 입점 전략 PPT를 자동 생성합니다.</p>
+  </div>
+
+  <div class="ppt-layout">
+    <!-- 왼쪽: 설정 패널 -->
+    <div>
+      <!-- Step 1 -->
+      <div class="panel">
+        <div class="ppt-step-label">Step 1 · 기본 설정</div>
+        <div class="fg" style="margin-bottom:10px">
+          <label>브랜드명</label>
+          <input id="ppt-brand" type="text" placeholder="예) 마뗑킴" list="ppt-brand-list" oninput="onPptBrandChange()" autocomplete="off">
+          <datalist id="ppt-brand-list"></datalist>
+        </div>
+        <div class="fg" style="margin-bottom:10px">
+          <label>점포 선택</label>
+          <select id="ppt-store" onchange="onPptStoreChange()">
+            <option value="">-- 점포를 선택하세요 --</option>
+          </select>
+        </div>
+        <div class="fg" style="margin-bottom:0">
+          <label>키맨 EBG 분석 <span style="color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0">(선택사항)</span></label>
+          <select id="ppt-ebg" onchange="onPptEbgChange()">
+            <option value="">-- EBG 분석 없음 --</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="panel">
+        <div class="ppt-step-label">Step 2 · 추가 자료</div>
+
+        <div style="margin-bottom:16px">
+          <div style="font-size:11px;font-weight:700;color:var(--text-sec);margin-bottom:8px;text-transform:uppercase;letter-spacing:.6px">DART 공시 파일 <span style="color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0">(PDF 또는 이미지, 선택)</span></div>
+          <div class="dart-upload-zone" id="dart-zone"
+            onclick="document.getElementById('dart-file').click()"
+            ondragover="event.preventDefault();this.classList.add('over')"
+            ondragleave="this.classList.remove('over')"
+            ondrop="onDartDrop(event)">
+            <input type="file" id="dart-file" accept=".pdf,image/*" onchange="onDartFileChange(event)">
+            <div id="dart-zone-inner">
+              <div style="font-size:28px;margin-bottom:6px;opacity:.4">📄</div>
+              <div style="font-size:12px;color:var(--text-sec)">클릭 또는 드래그로 DART 파일 업로드</div>
+              <div style="font-size:10px;color:var(--text-dim);margin-top:4px">PDF · JPG · PNG 지원</div>
+            </div>
+          </div>
+          <div id="dart-status" style="display:none;margin-top:6px;font-size:11px;color:var(--green)"></div>
+        </div>
+
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-sec);margin-bottom:8px;text-transform:uppercase;letter-spacing:.6px">최근 뉴스 기사</div>
+          <button id="news-fetch-btn" onclick="fetchPptNews()"
+            style="width:100%;padding:9px 18px;border-radius:9999px;border:1px solid var(--border-mid);background:transparent;color:var(--text-sec);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s"
+            onmouseover="this.style.borderColor='var(--green)';this.style.color='#fff'"
+            onmouseout="this.style.borderColor='var(--border-mid)';this.style.color='var(--text-sec)'">
+            브랜드 뉴스 자동 불러오기
+          </button>
+          <div id="ppt-news-list" style="display:none;margin-top:10px" class="ppt-news-list-box"></div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="panel">
+        <div class="ppt-step-label">Step 3 · AI 전략 생성</div>
+        <p style="font-size:12px;color:var(--text-sec);margin-bottom:12px;line-height:1.6">EBG 인사이트 기반 전략 슬라이드 3개를 Gemini가 자동으로 작성합니다.</p>
+        <button class="ppt-gen-btn" id="ppt-gen-btn" onclick="generatePptContent()">전략 PPT 생성</button>
+        <div id="ppt-gen-status" style="display:none;margin-top:10px;font-size:12px;color:var(--text-sec);text-align:center;padding:8px;background:var(--surface-2);border-radius:8px"></div>
+      </div>
+    </div>
+
+    <!-- 오른쪽: 슬라이드 미리보기 -->
+    <div>
+      <div class="panel">
+        <div class="ph">슬라이드 미리보기</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px" id="ppt-snav-wrap">
+          <button class="ppt-snav on" onclick="selectPptSlide(0)">1. 상권분석</button>
+          <button class="ppt-snav" onclick="selectPptSlide(1)">2. 점포분석</button>
+          <button class="ppt-snav" onclick="selectPptSlide(2)">3. 브랜드 현황</button>
+          <button class="ppt-snav" onclick="selectPptSlide(3)">4. EBG 전략 1</button>
+          <button class="ppt-snav" onclick="selectPptSlide(4)">5. EBG 전략 2</button>
+          <button class="ppt-snav" onclick="selectPptSlide(5)">6. EBG 전략 3</button>
+          <button class="ppt-snav" onclick="selectPptSlide(6)">7. 추가 내용</button>
+        </div>
+        <div id="ppt-slide-area">
+          <div class="ppt-canvas">
+            <div class="ppt-empty-hint">브랜드·점포 선택 후<br><b style="color:var(--text-sec)">전략 PPT 생성</b>을 눌러주세요</div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+          <div style="display:flex;gap:6px">
+            <button id="ppt-prev-btn" onclick="selectPptSlide(PPT_CUR-1)" style="padding:6px 14px;border-radius:9999px;border:1px solid var(--border);background:transparent;color:var(--text-sec);font-size:11px;cursor:pointer" disabled>← 이전</button>
+            <button id="ppt-next-btn" onclick="selectPptSlide(PPT_CUR+1)" style="padding:6px 14px;border-radius:9999px;border:1px solid var(--border);background:transparent;color:var(--text-sec);font-size:11px;cursor:pointer" disabled>다음 →</button>
+          </div>
+          <button class="ppt-dl-btn" id="ppt-dl-btn" onclick="downloadPptx()" disabled>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M7 10l5 5 5-5M12 15V3"/></svg>
+            .pptx 다운로드
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 </main>
 <!-- Brand Drawer -->
 <div class="bd-overlay" id="bd-overlay" onclick="closeBrandDrawer()"></div>
@@ -1886,6 +2030,7 @@ function goTab(n){
   if(n===6)renderOnlineChannel();
   if(n===7)renderOnlineBest();
   if(n===8)initEbgTab();
+  if(n===9)initPptTab();
 }
 
 function dtab(t){
@@ -5431,6 +5576,496 @@ function deleteEbg() {
   EBG_ENTRIES = EBG_ENTRIES.filter(e => e.id !== EBG_SELECTED_ID);
   saveEbgEntries();
   closeEbgDetail();
+}
+
+// ── 전략 PPT ──
+let PPT_CUR = 0;
+let PPT_DATA = {
+  brand:'', store:'', ebgId:null,
+  storeData:null, areaInfo:null,
+  dartMime:null, dartBase64:null, dartAnalysis:null,
+  news:[], ebgAnalysis:null, strategies:null,
+  s7Title:'추가 내용', s7Content:'',
+  generated:false
+};
+
+function initPptTab() {
+  const dl = document.getElementById('ppt-brand-list');
+  if (dl && typeof EXCEL_TENANTS !== 'undefined') {
+    const brands = new Set();
+    Object.values(EXCEL_TENANTS).forEach(floors =>
+      Object.values(floors).forEach(list =>
+        list.forEach(({brand, isVacant}) => { if (!isVacant && brand) brands.add(brand); })
+      )
+    );
+    dl.innerHTML = [...brands].sort().map(b => `<option value="${b}">`).join('');
+  }
+  const storeSel = document.getElementById('ppt-store');
+  if (storeSel && storeSel.options.length <= 1) {
+    Object.keys(STORES).forEach(s => {
+      const o = document.createElement('option');
+      o.value = o.textContent = s;
+      storeSel.appendChild(o);
+    });
+  }
+  renderPptSlide();
+}
+
+function onPptBrandChange() {
+  const brand = document.getElementById('ppt-brand').value.trim();
+  PPT_DATA.brand = brand;
+  const sel = document.getElementById('ppt-ebg');
+  const entries = (typeof EBG_ENTRIES !== 'undefined' ? EBG_ENTRIES : [])
+    .filter(e => e.brand === brand && e.analysis);
+  sel.innerHTML = '<option value="">-- EBG 분석 없음 --</option>' +
+    entries.map(e => `<option value="${e.id}">[${e.date}] ${e.md || e.brand}</option>`).join('');
+  if (entries.length) {
+    sel.value = entries[entries.length-1].id;
+    PPT_DATA.ebgId = entries[entries.length-1].id;
+    PPT_DATA.ebgAnalysis = entries[entries.length-1].analysis;
+  } else {
+    PPT_DATA.ebgId = null; PPT_DATA.ebgAnalysis = null;
+  }
+}
+
+function onPptStoreChange() {
+  const store = document.getElementById('ppt-store').value;
+  PPT_DATA.store = store;
+  PPT_DATA.storeData = STORES[store] || null;
+  PPT_DATA.areaInfo = STORE_AREA_INFO[store] || null;
+}
+
+function onPptEbgChange() {
+  const id = document.getElementById('ppt-ebg').value;
+  PPT_DATA.ebgId = id;
+  const entry = (typeof EBG_ENTRIES !== 'undefined' ? EBG_ENTRIES : []).find(e => e.id === id);
+  PPT_DATA.ebgAnalysis = entry?.analysis || null;
+}
+
+function onDartDrop(e) {
+  e.preventDefault();
+  document.getElementById('dart-zone').classList.remove('over');
+  const file = e.dataTransfer.files[0];
+  if (file) processDartFile(file);
+}
+
+function onDartFileChange(e) {
+  const file = e.target.files[0];
+  if (file) processDartFile(file);
+}
+
+function processDartFile(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const data = ev.target.result;
+    const m = data.match(/^data:([\w\/+]+);base64,(.+)$/);
+    if (!m) return;
+    PPT_DATA.dartMime = m[1];
+    PPT_DATA.dartBase64 = m[2];
+    PPT_DATA.dartAnalysis = null;
+    document.getElementById('dart-zone-inner').innerHTML =
+      `<div style="font-size:22px;margin-bottom:4px">✅</div>
+       <div style="font-size:12px;color:var(--green);font-weight:700">${file.name}</div>
+       <div style="font-size:10px;color:var(--text-dim);margin-top:3px">${(file.size/1024).toFixed(0)} KB · AI 분석 준비 완료</div>`;
+    document.getElementById('dart-status').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function fetchPptNews() {
+  const brand = document.getElementById('ppt-brand').value.trim();
+  if (!brand) { alert('브랜드명을 먼저 입력하세요'); return; }
+  const btn = document.getElementById('news-fetch-btn');
+  btn.textContent = '불러오는 중...'; btn.disabled = true;
+  try {
+    const r = await fetch('/api/news', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({query: brand + ' 브랜드'})
+    });
+    const data = await r.json();
+    const items = data.items || [];
+    PPT_DATA.news = items.slice(0, 6);
+    const listEl = document.getElementById('ppt-news-list');
+    listEl.innerHTML = items.length === 0
+      ? '<div style="font-size:11px;color:var(--text-dim);padding:6px">검색 결과 없음</div>'
+      : items.slice(0,6).map(n => `
+          <div class="ppt-news-row">
+            <div style="font-size:11px;font-weight:700;color:#93c5fd;line-height:1.4">${n.title.replace(/<[^>]+>/g,'').slice(0,60)}...</div>
+            <div style="font-size:9px;color:var(--text-dim);margin-top:2px">${n.pubDate}</div>
+          </div>`).join('');
+    listEl.style.display = 'block';
+  } catch(err) {
+    document.getElementById('ppt-news-list').innerHTML = `<div style="font-size:11px;color:var(--danger);padding:6px">오류: ${err.message}</div>`;
+    document.getElementById('ppt-news-list').style.display = 'block';
+  } finally {
+    btn.textContent = '브랜드 뉴스 자동 불러오기'; btn.disabled = false;
+  }
+}
+
+async function generatePptContent() {
+  const brand = document.getElementById('ppt-brand').value.trim();
+  const store = document.getElementById('ppt-store').value;
+  if (!brand || !store) { alert('브랜드명과 점포를 선택하세요'); return; }
+
+  PPT_DATA.brand = brand; PPT_DATA.store = store;
+  PPT_DATA.storeData = STORES[store] || PPT_DATA.storeData;
+  PPT_DATA.areaInfo = STORE_AREA_INFO[store] || PPT_DATA.areaInfo;
+  const ebgSel = document.getElementById('ppt-ebg').value;
+  if (ebgSel) {
+    const entry = (typeof EBG_ENTRIES!=='undefined'?EBG_ENTRIES:[]).find(e=>e.id===ebgSel);
+    PPT_DATA.ebgId = ebgSel; PPT_DATA.ebgAnalysis = entry?.analysis||null;
+  }
+
+  const btn = document.getElementById('ppt-gen-btn');
+  const statusEl = document.getElementById('ppt-gen-status');
+  btn.disabled = true; statusEl.style.display = 'block';
+
+  if (PPT_DATA.dartBase64 && !PPT_DATA.dartAnalysis) {
+    statusEl.textContent = '⏳ DART 파일 분석 중...';
+    try {
+      const r = await fetch('/api/dart', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({image:`data:${PPT_DATA.dartMime};base64,${PPT_DATA.dartBase64}`, brand})
+      });
+      const d = await r.json();
+      PPT_DATA.dartAnalysis = d.error ? null : d;
+      const stEl = document.getElementById('dart-status');
+      stEl.style.display = 'block';
+      stEl.textContent = d.error ? `⚠ DART 분석 실패: ${d.error}` : '✓ DART 재무 분석 완료';
+      stEl.style.color = d.error ? 'var(--danger)' : 'var(--green)';
+    } catch(err) {
+      const stEl = document.getElementById('dart-status');
+      stEl.style.display = 'block';
+      stEl.textContent = `⚠ DART 오류: ${err.message}`;
+      stEl.style.color = 'var(--danger)';
+    }
+  }
+
+  if (PPT_DATA.ebgAnalysis) {
+    statusEl.textContent = '⏳ EBG 전략 생성 중...';
+    try {
+      const r = await fetch('/api/ppt-strategy', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ebgAnalysis:PPT_DATA.ebgAnalysis, brand, store})
+      });
+      const d = await r.json();
+      PPT_DATA.strategies = d.strategies || null;
+    } catch(err) { console.error('전략 생성 실패', err); }
+  }
+
+  PPT_DATA.generated = true;
+  statusEl.textContent = '✓ PPT 생성 완료!';
+  setTimeout(()=>{ statusEl.style.display='none'; }, 2500);
+  btn.disabled = false; btn.textContent = '다시 생성';
+  document.getElementById('ppt-dl-btn').disabled = false;
+  document.getElementById('ppt-prev-btn').disabled = false;
+  document.getElementById('ppt-next-btn').disabled = false;
+  renderPptSlide();
+}
+
+function selectPptSlide(n) {
+  if (n < 0 || n > 6) return;
+  PPT_CUR = n;
+  document.querySelectorAll('.ppt-snav').forEach((b,i)=>b.classList.toggle('on',i===n));
+  renderPptSlide();
+}
+
+function renderPptSlide() {
+  const area = document.getElementById('ppt-slide-area');
+  if (!area) return;
+  if (!PPT_DATA.generated) {
+    area.innerHTML = `<div class="ppt-canvas"><div class="ppt-empty-hint">브랜드·점포 선택 후<br><b style="color:var(--text-sec)">전략 PPT 생성</b>을 눌러주세요</div></div>`;
+    return;
+  }
+  const builders = [pptS1,pptS2,pptS3,()=>pptStrategy(0),()=>pptStrategy(1),()=>pptStrategy(2),pptS7];
+  area.innerHTML = `<div class="ppt-canvas">${builders[PPT_CUR]()}</div>`;
+}
+
+function pptKpiBox(lbl, val, accent, colSpan) {
+  return `<div class="ppt-kpi" style="border-left:3px solid ${accent};${colSpan?'grid-column:span '+colSpan:''}">
+    <div class="ppt-kpi-lbl">${lbl}</div>
+    <div class="ppt-kpi-val" style="font-size:${String(val).length>10?'11px':'14px'}">${val}</div>
+  </div>`;
+}
+
+function pptS1() {
+  const s = PPT_DATA.storeData||{}, a = PPT_DATA.areaInfo||{};
+  return `<div class="ppt-slide">
+    <div class="ppt-head" style="background:#0f172a">
+      <div class="ppt-head-eye" style="color:#1ed760">MARKET ANALYSIS · 01</div>
+      <div class="ppt-head-title">상권 분석 — ${PPT_DATA.store||'점포'}</div>
+    </div>
+    <div class="ppt-body">
+      <div class="ppt-kpi-grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:7px">
+        ${pptKpiBox('상권지수', s.avg||'-', '#1ed760')}
+        ${pptKpiBox('소득 등급', a.incomeGrade||'-', '#3b82f6')}
+        ${pptKpiBox('핵심 연령대', a.ageCore||'-', '#f59e0b')}
+      </div>
+      <div class="ppt-kpi-grid" style="grid-template-columns:1fr 1fr 1fr">
+        ${pptKpiBox('위치', (a.district||'-')+'<br><span style="font-size:8px;color:#94a3b8">'+( a.city||'')+'</span>', '#8b5cf6')}
+        ${pptKpiBox('성별 특성', a.genderLean||'-', '#ec4899')}
+        ${pptKpiBox('유동인구 추정', a.popEst ? a.popEst[0]+'~'+a.popEst[1]+'만명' : '-', '#06b6d4')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function pptS2() {
+  const s = PPT_DATA.storeData||{}, a = PPT_DATA.areaInfo||{};
+  const g = s.avg ? grade(s.avg) : {g:'-',l:'-'};
+  const gColors = {S:'#f59e0b',A:'#22c55e',B:'#3b6fd4',C:'#f97316',D:'#ef4444'};
+  const gc = gColors[g.g]||'#64748b';
+  return `<div class="ppt-slide">
+    <div class="ppt-head" style="background:#1e293b">
+      <div class="ppt-head-eye" style="color:#1ed760">STORE ANALYSIS · 02</div>
+      <div class="ppt-head-title">점포 분석 — ${PPT_DATA.store||'점포'}</div>
+    </div>
+    <div class="ppt-body">
+      <div class="ppt-kpi-grid" style="grid-template-columns:80px 1fr 1fr;margin-bottom:7px">
+        <div class="ppt-kpi" style="border-left:3px solid ${gc};display:flex;flex-direction:column;justify-content:center">
+          <div class="ppt-kpi-lbl">상권 등급</div>
+          <div style="font-size:28px;font-weight:900;color:${gc};line-height:1">${g.g}</div>
+        </div>
+        ${pptKpiBox('상권지수', (s.avg||'-')+' / 100', '#8b5cf6')}
+        ${pptKpiBox('소득 수준', (a.incomeGrade||'-')+' '+( a.incomeLbl||''), '#06b6d4')}
+      </div>
+      <div class="ppt-kpi-grid" style="grid-template-columns:1fr 1fr 1fr">
+        ${pptKpiBox('위치', a.district||'-', '#1ed760')}
+        ${pptKpiBox('핵심 연령대', a.ageCore||'-', '#f59e0b')}
+        ${pptKpiBox('성별 특성', a.genderLean||'-', '#ec4899')}
+      </div>
+      <div style="margin-top:7px;padding:7px 10px;background:#fff;border-radius:5px;font-size:9px;color:#475569;border-left:3px solid ${gc}">${g.l}</div>
+    </div>
+  </div>`;
+}
+
+function pptS3() {
+  const dart = PPT_DATA.dartAnalysis, news = PPT_DATA.news;
+  const dartRows = dart ? [
+    ['매출액', dart.revenue], ['영업이익', dart.operatingProfit],
+    ['당기순이익', dart.netIncome], ['부채비율', dart.debtRatio]
+  ].filter(r=>r[1]) : [];
+  return `<div class="ppt-slide">
+    <div class="ppt-head" style="background:#1a1a2e">
+      <div class="ppt-head-eye" style="color:#1ed760">BRAND STATUS · 03</div>
+      <div class="ppt-head-title">브랜드 현황 — ${PPT_DATA.brand||'브랜드'}</div>
+    </div>
+    <div class="ppt-body" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 18px">
+      <div>
+        <div class="ppt-section-title" style="border-bottom:1.5px solid #1ed760;padding-bottom:3px">재무 현황 (DART)</div>
+        ${dartRows.length ? dartRows.map(([l,v])=>`
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:#fff;border-radius:4px;margin-bottom:4px;font-size:9px">
+            <span style="color:#64748b">${l}</span><span style="font-weight:700;color:#0f172a">${v}</span>
+          </div>`).join('')+
+          (dart.businessSummary?`<div style="padding:7px 8px;background:#f0fdf4;border-radius:4px;font-size:8px;color:#166534;line-height:1.5;margin-top:4px">${dart.businessSummary.slice(0,100)}...</div>`:'')
+          : `<div style="padding:16px;text-align:center;color:#94a3b8;font-size:10px">DART 파일 미등록</div>`}
+      </div>
+      <div>
+        <div class="ppt-section-title" style="border-bottom:1.5px solid #3b82f6;padding-bottom:3px">최근 뉴스</div>
+        ${news.length ? news.slice(0,4).map(n=>`
+          <div style="padding:5px 8px;background:#fff;border-left:2px solid #3b82f6;border-radius:0 4px 4px 0;margin-bottom:4px">
+            <div style="font-size:8px;font-weight:700;color:#1e40af;line-height:1.4">${n.title.replace(/<[^>]+>/g,'').slice(0,45)}...</div>
+            <div style="font-size:7px;color:#94a3b8;margin-top:1px">${n.pubDate||''}</div>
+          </div>`).join('')
+          : `<div style="padding:16px;text-align:center;color:#94a3b8;font-size:10px">뉴스 미조회</div>`}
+      </div>
+    </div>
+  </div>`;
+}
+
+function pptStrategy(idx) {
+  const colors = ['#1ed760','#3b82f6','#f59e0b'];
+  const bgColors = ['#f0fdf4','#eff6ff','#fffbeb'];
+  const txtColors = ['#166534','#1e40af','#92400e'];
+  const defaultTitles = ['성장 기회 전략','리스크 관리 전략','운영 최적화 전략'];
+  const st = PPT_DATA.strategies ? PPT_DATA.strategies[idx] : null;
+  const c = colors[idx], bg = bgColors[idx], tc = txtColors[idx];
+  return `<div class="ppt-slide">
+    <div class="ppt-head" style="background:#0f172a;border-left:4px solid ${c}">
+      <div class="ppt-head-eye" style="color:${c}">EBG STRATEGY · 0${4+idx}</div>
+      <div class="ppt-head-title">${st?.title || defaultTitles[idx]}</div>
+    </div>
+    <div class="ppt-body">
+      ${st ? `
+        ${st.insight ? `<div class="ppt-insight-box" style="background:${bg};border-left:3px solid ${c};margin-bottom:8px">
+          <div style="font-size:7px;font-weight:800;color:${tc};text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px">핵심 인사이트</div>
+          <div style="font-size:10px;font-weight:700;color:#0f172a">${st.insight}</div>
+        </div>` : ''}
+        <div class="ppt-section-title">실행 방안</div>
+        ${(st.actions||[]).map((a,i)=>`
+          <div class="ppt-action-row" style="border-left:3px solid ${c};margin-bottom:4px">
+            <span style="color:${c};font-weight:800;flex-shrink:0">${i+1}</span>
+            <span>${a}</span>
+          </div>`).join('')}
+        ${st.expectedEffect ? `<div style="margin-top:6px;padding:7px 10px;background:#fff;border-radius:4px;font-size:9px;color:#475569;border-left:3px solid #e2e8f0"><span style="font-weight:800;color:#64748b">기대 효과: </span>${st.expectedEffect}</div>` : ''}
+      ` : `<div class="ppt-empty-hint" style="height:calc(100% - 20px)">EBG 분석을 선택하고<br>PPT를 생성하면 전략이 작성됩니다</div>`}
+    </div>
+  </div>`;
+}
+
+function pptS7() {
+  return `<div class="ppt-slide">
+    <div class="ppt-head" style="background:#374151">
+      <div class="ppt-head-eye" style="color:#9ca3af">ADDITIONAL · 07</div>
+      <div class="ppt-head-title">${PPT_DATA.s7Title||'추가 내용'}</div>
+    </div>
+    <div class="ppt-body">
+      <div style="margin-bottom:8px">
+        <div style="font-size:9px;font-weight:800;color:#64748b;text-transform:uppercase;margin-bottom:4px">슬라이드 제목</div>
+        <input value="${PPT_DATA.s7Title||'추가 내용'}"
+          oninput="PPT_DATA.s7Title=this.value;this.closest('.ppt-slide').querySelector('.ppt-head-title').textContent=this.value"
+          style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:5px;font-size:11px;color:#0f172a;outline:none;background:#fff">
+      </div>
+      <div>
+        <div style="font-size:9px;font-weight:800;color:#64748b;text-transform:uppercase;margin-bottom:4px">내용</div>
+        <textarea oninput="PPT_DATA.s7Content=this.value"
+          style="width:100%;height:140px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:5px;font-size:10px;resize:none;outline:none;color:#0f172a;background:#fff;line-height:1.7;font-family:inherit"
+          placeholder="추가로 기입할 내용을 자유롭게 입력하세요...">${PPT_DATA.s7Content||''}</textarea>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function downloadPptx() {
+  if (!PPT_DATA.store || !PPT_DATA.brand) { alert('먼저 PPT를 생성하세요'); return; }
+  const btn = document.getElementById('ppt-dl-btn');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ 생성 중...';
+  try {
+    const pptx = new PptxGenJS();
+    pptx.layout = 'LAYOUT_WIDE';
+    pptx.title = `${PPT_DATA.brand} 입점 전략 PPT`;
+    const BG = 'F8FAFC', DARK = '0f172a', GREEN = '1ed760', WHITE = 'FFFFFF', SLATE = '64748B';
+
+    const brand = PPT_DATA.brand, store = PPT_DATA.store;
+    const s = PPT_DATA.storeData||{}, a = PPT_DATA.areaInfo||{};
+
+    function addHeader(sl, bgHex, eyeTxt, eyeColor, titleTxt, accentLeft) {
+      sl.addShape(pptx.ShapeType.rect, {x:0,y:0,w:'100%',h:1.35,fill:{color:bgHex}});
+      if (accentLeft) sl.addShape(pptx.ShapeType.rect, {x:0,y:0,w:0.12,h:1.35,fill:{color:accentLeft},line:{color:accentLeft,width:0}});
+      sl.addText(eyeTxt, {x:0.35,y:0.18,w:9,h:0.28,fontSize:7.5,color:eyeColor,bold:true,charSpacing:2});
+      sl.addText(titleTxt, {x:0.35,y:0.5,w:9.2,h:0.7,fontSize:20,color:WHITE,bold:true});
+    }
+
+    function addCard(sl, x, y, w, h, accentColor, lbl, val) {
+      sl.addShape(pptx.ShapeType.rect, {x,y,w,h,fill:{color:WHITE},line:{color:'E2E8F0',width:0.75}});
+      sl.addShape(pptx.ShapeType.rect, {x,y,w:0.06,h,fill:{color:accentColor},line:{color:accentColor,width:0}});
+      sl.addText(lbl, {x:x+0.12,y:y+0.1,w:w-0.18,h:0.22,fontSize:7,color:SLATE,bold:true,charSpacing:0.8});
+      sl.addText(String(val||'-'), {x:x+0.12,y:y+0.34,w:w-0.18,h:h-0.44,fontSize:String(val||'').length>12?9:13,color:DARK,bold:true,valign:'top'});
+    }
+
+    // ── Slide 1 ──
+    const sl1 = pptx.addSlide(); sl1.background = {color:BG};
+    addHeader(sl1, DARK, 'MARKET ANALYSIS · 01', GREEN, `상권 분석 — ${store}`);
+    const m1 = [
+      [GREEN,'상권지수',s.avg||'-'],[' 3B82F6','소득 등급',a.incomeGrade||'-'],['F59E0B','핵심 연령',a.ageCore||'-'],
+      ['8B5CF6','위치',a.district||'-'],['EC4899','성별 특성',a.genderLean||'-'],['06B6D4','유동인구 추정',a.popEst?a.popEst[0]+'~'+a.popEst[1]+'만':'-'],
+    ];
+    m1.forEach(([c,l,v],i)=>{ const col=i%3, row=Math.floor(i/3); addCard(sl1,0.35+col*3.15,1.5+row*1.3,2.95,1.2,c.trim(),l,v); });
+
+    // ── Slide 2 ──
+    const sl2 = pptx.addSlide(); sl2.background = {color:BG};
+    addHeader(sl2, '1e293b', 'STORE ANALYSIS · 02', GREEN, `점포 분석 — ${store}`);
+    const g2 = s.avg ? grade(s.avg) : {g:'-',l:'-'};
+    const gcMap = {S:'F59E0B',A:'22C55E',B:'3B6FD4',C:'F97316',D:'EF4444'};
+    const gc2 = gcMap[g2.g]||SLATE;
+    sl2.addShape(pptx.ShapeType.rect,{x:0.35,y:1.5,w:1.5,h:1.5,fill:{color:WHITE},line:{color:'E2E8F0',width:0.75}});
+    sl2.addShape(pptx.ShapeType.rect,{x:0.35,y:1.5,w:0.06,h:1.5,fill:{color:gc2},line:{color:gc2,width:0}});
+    sl2.addText('상권 등급',{x:0.47,y:1.62,w:1.3,h:0.22,fontSize:7,color:SLATE,bold:true,charSpacing:0.8});
+    sl2.addText(g2.g,{x:0.47,y:1.85,w:1.3,h:0.8,fontSize:32,color:gc2,bold:true});
+    const m2=[['8B5CF6','상권지수',String(s.avg||'-')+' / 100'],['06B6D4','소득 수준',(a.incomeGrade||'-')+' '+(a.incomeLbl||'')],['F59E0B','핵심 연령대',a.ageCore||'-'],['EC4899','성별 특성',a.genderLean||'-'],['1ed760','외국인 비율',a.foreignPct?a.foreignPct+'%':'-']];
+    m2.forEach(([c,l,v],i)=>{ const col=i%2, row=Math.floor(i/2); addCard(sl2,1.95+col*2.85,1.5+row*1.0,2.7,0.95,c,l,v); });
+    sl2.addShape(pptx.ShapeType.rect,{x:0.35,y:4.6,w:9.3,h:0.5,fill:{color:WHITE},line:{color:'E2E8F0',width:0.75}});
+    sl2.addText(g2.l,{x:0.5,y:4.7,w:9,h:0.3,fontSize:9,color:'475569'});
+
+    // ── Slide 3 ──
+    const sl3 = pptx.addSlide(); sl3.background = {color:BG};
+    addHeader(sl3, '1a1a2e', 'BRAND STATUS · 03', GREEN, `브랜드 현황 — ${brand}`);
+    sl3.addText('재무 현황 (DART)',{x:0.35,y:1.45,w:4.4,h:0.28,fontSize:7.5,color:SLATE,bold:true,charSpacing:0.8});
+    sl3.addShape(pptx.ShapeType.rect,{x:0.35,y:1.72,w:4.4,h:0.04,fill:{color:GREEN},line:{color:GREEN,width:0}});
+    const dartItems = PPT_DATA.dartAnalysis ? [
+      ['매출액',PPT_DATA.dartAnalysis.revenue],['영업이익',PPT_DATA.dartAnalysis.operatingProfit],
+      ['당기순이익',PPT_DATA.dartAnalysis.netIncome],['부채비율',PPT_DATA.dartAnalysis.debtRatio]
+    ].filter(r=>r[1]) : [];
+    dartItems.forEach(([l,v],i)=>{
+      const y=1.8+i*0.44;
+      sl3.addShape(pptx.ShapeType.rect,{x:0.35,y,w:4.4,h:0.4,fill:{color:WHITE},line:{color:'E2E8F0',width:0.75}});
+      sl3.addText(l,{x:0.5,y:y+0.1,w:1.8,h:0.22,fontSize:8,color:SLATE});
+      sl3.addText(String(v),{x:2.4,y:y+0.1,w:2.2,h:0.22,fontSize:9,color:DARK,bold:true});
+    });
+    if (!dartItems.length) {
+      sl3.addShape(pptx.ShapeType.rect,{x:0.35,y:1.8,w:4.4,h:1.2,fill:{color:WHITE},line:{color:'E2E8F0',width:0.75}});
+      sl3.addText('DART 파일 미등록',{x:0.35,y:2.2,w:4.4,h:0.4,fontSize:10,color:'94A3B8',align:'center'});
+    }
+    if (PPT_DATA.dartAnalysis?.businessSummary) {
+      const bsY = 1.8 + dartItems.length*0.44 + 0.1;
+      sl3.addShape(pptx.ShapeType.rect,{x:0.35,y:bsY,w:4.4,h:0.7,fill:{color:'F0FDF4'},line:{color:GREEN,width:0.75}});
+      sl3.addText(PPT_DATA.dartAnalysis.businessSummary.slice(0,120),{x:0.45,y:bsY+0.1,w:4.2,h:0.55,fontSize:7.5,color:'166534',lineSpacing:11});
+    }
+    sl3.addText('최근 뉴스',{x:5.1,y:1.45,w:4.5,h:0.28,fontSize:7.5,color:SLATE,bold:true,charSpacing:0.8});
+    sl3.addShape(pptx.ShapeType.rect,{x:5.1,y:1.72,w:4.5,h:0.04,fill:{color:'3B82F6'},line:{color:'3B82F6',width:0}});
+    (PPT_DATA.news.slice(0,4)).forEach((n,i)=>{
+      const y=1.8+i*0.55;
+      sl3.addShape(pptx.ShapeType.rect,{x:5.1,y,w:4.5,h:0.5,fill:{color:WHITE},line:{color:'E2E8F0',width:0.75}});
+      sl3.addShape(pptx.ShapeType.rect,{x:5.1,y,w:0.06,h:0.5,fill:{color:'3B82F6'},line:{color:'3B82F6',width:0}});
+      const title = n.title.replace(/<[^>]+>/g,'');
+      sl3.addText(title.slice(0,50)+(title.length>50?'...':''),{x:5.22,y:y+0.08,w:4.28,h:0.26,fontSize:8,color:'1e40af',bold:true});
+      sl3.addText(n.pubDate||'',{x:5.22,y:y+0.35,w:4.28,h:0.15,fontSize:7,color:'94A3B8'});
+    });
+
+    // ── Slides 4-6: EBG 전략 ──
+    const strColors = [GREEN,'3B82F6','F59E0B'];
+    const strBg = ['F0FDF4','EFF6FF','FFFBEB'];
+    const strTc = ['166534','1E40AF','92400E'];
+    const defTitles = ['성장 기회 전략','리스크 관리 전략','운영 최적화 전략'];
+    [0,1,2].forEach(idx=>{
+      const sl = pptx.addSlide(); sl.background = {color:BG};
+      const sc = strColors[idx];
+      addHeader(sl, DARK, `EBG STRATEGY · 0${4+idx}`, sc, (PPT_DATA.strategies?.[idx]?.title || defTitles[idx]), sc);
+      const st = PPT_DATA.strategies?.[idx];
+      if (st) {
+        if (st.insight) {
+          sl.addShape(pptx.ShapeType.rect,{x:0.35,y:1.5,w:9.3,h:0.65,fill:{color:strBg[idx]},line:{color:sc,width:0.75}});
+          sl.addText('핵심 인사이트',{x:0.5,y:1.56,w:3,h:0.22,fontSize:7,color:strTc[idx],bold:true,charSpacing:0.8});
+          sl.addText(st.insight,{x:0.5,y:1.76,w:9.1,h:0.3,fontSize:10,color:DARK,bold:true});
+        }
+        sl.addText('실행 방안',{x:0.35,y:2.28,w:3,h:0.24,fontSize:7.5,color:SLATE,bold:true,charSpacing:0.8});
+        (st.actions||[]).forEach((act,i)=>{
+          const ay=2.55+i*0.5;
+          sl.addShape(pptx.ShapeType.rect,{x:0.35,y:ay,w:9.3,h:0.46,fill:{color:WHITE},line:{color:'E2E8F0',width:0.75}});
+          sl.addShape(pptx.ShapeType.rect,{x:0.35,y:ay,w:0.06,h:0.46,fill:{color:sc},line:{color:sc,width:0}});
+          sl.addText(String(i+1),{x:0.47,y:ay+0.12,w:0.3,h:0.24,fontSize:9,color:sc,bold:true});
+          sl.addText(act,{x:0.83,y:ay+0.12,w:8.7,h:0.24,fontSize:9,color:DARK});
+        });
+        if (st.expectedEffect) {
+          const ey=2.55+(st.actions?.length||0)*0.5+0.1;
+          if(ey<4.9){ sl.addShape(pptx.ShapeType.rect,{x:0.35,y:ey,w:9.3,h:0.5,fill:{color:'F8FAFC'},line:{color:'E2E8F0',width:0.75}});
+          sl.addText('기대 효과: '+st.expectedEffect,{x:0.5,y:ey+0.12,w:9.1,h:0.26,fontSize:8.5,color:'475569'}); }
+        }
+      } else {
+        sl.addText('EBG 분석을 선택하고 PPT를 생성하면 전략이 자동으로 작성됩니다.',{x:0.35,y:3.0,w:9.3,h:0.5,fontSize:11,color:'94A3B8',align:'center'});
+      }
+    });
+
+    // ── Slide 7 ──
+    const sl7 = pptx.addSlide(); sl7.background = {color:BG};
+    addHeader(sl7, '374151', 'ADDITIONAL · 07', '9CA3AF', PPT_DATA.s7Title||'추가 내용');
+    if (PPT_DATA.s7Content) {
+      sl7.addShape(pptx.ShapeType.rect,{x:0.35,y:1.5,w:9.3,h:3.9,fill:{color:WHITE},line:{color:'E2E8F0',width:0.75}});
+      sl7.addText(PPT_DATA.s7Content,{x:0.5,y:1.65,w:9.1,h:3.6,fontSize:11,color:DARK,valign:'top',lineSpacing:18});
+    } else {
+      sl7.addShape(pptx.ShapeType.rect,{x:0.35,y:1.5,w:9.3,h:3.9,fill:{color:WHITE},line:{color:'E2E8F0',width:0.75}});
+      sl7.addText('(추가 내용을 입력하세요)',{x:0.35,y:3.2,w:9.3,h:0.5,fontSize:11,color:'94A3B8',align:'center'});
+    }
+
+    await pptx.writeFile({fileName:`${brand}_${store}_입점전략.pptx`});
+  } catch(err) {
+    alert('PPT 생성 오류: ' + err.message);
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M7 10l5 5 5-5M12 15V3"/></svg> .pptx 다운로드';
+  }
 }
 </script>
 </body>

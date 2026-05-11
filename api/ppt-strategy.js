@@ -1,0 +1,81 @@
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
+
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) return res.status(503).json({ error: 'GEMINI_API_KEY 없음' });
+
+  const { ebgAnalysis, brand, store } = req.body || {};
+  if (!ebgAnalysis) return res.status(400).json({ error: 'ebgAnalysis 필드 필요' });
+
+  const prompt = `다음은 ${brand || '브랜드'} 브랜드의 키맨 EBG(External Brand Group) 미팅 분석 결과입니다.
+${store ? `분석 대상 점포: ${store}` : ''}
+
+EBG 분석 데이터:
+${JSON.stringify(ebgAnalysis, null, 2)}
+
+이 EBG 인사이트를 바탕으로 이랜드리테일 MD가 브랜드 입점 전략을 수립할 수 있도록, 서로 다른 관점의 전략 3가지를 작성해주세요.
+전략은 구체적이고 실행 가능해야 하며, EBG 데이터에서 실제로 언급된 내용에 근거해야 합니다.
+
+아래 JSON 형식으로만 응답하세요:
+
+{
+  "strategies": [
+    {
+      "title": "전략 제목 (10자 이내, 임팩트 있게)",
+      "insight": "이 전략의 핵심 인사이트 1줄 (EBG 키맨 발언 기반)",
+      "actions": ["실행방안1 (구체적, 1~2줄)", "실행방안2", "실행방안3"],
+      "expectedEffect": "기대 효과 1~2줄"
+    },
+    {
+      "title": "전략 제목 2",
+      "insight": "핵심 인사이트",
+      "actions": ["실행방안1", "실행방안2", "실행방안3"],
+      "expectedEffect": "기대 효과"
+    },
+    {
+      "title": "전략 제목 3",
+      "insight": "핵심 인사이트",
+      "actions": ["실행방안1", "실행방안2", "실행방안3"],
+      "expectedEffect": "기대 효과"
+    }
+  ]
+}
+
+반드시 JSON만 반환하세요. 마크다운 코드블록(\`\`\`) 없이 순수 JSON으로만 응답하세요.`;
+
+  try {
+    const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+    const listData = await listRes.json();
+    const availableModels = (listData.models || []).map(m => m.name);
+    const flashModel = availableModels.find(n => n.includes('flash')) || availableModels[0];
+    if (!flashModel) return res.status(503).json({ error: '사용 가능한 모델 없음' });
+    const modelId = flashModel.replace('models/', '');
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${key}`;
+
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.3, maxOutputTokens: 2048 }
+      })
+    });
+
+    if (!r.ok) {
+      const err = await r.json();
+      return res.status(r.status).json({ error: err.error?.message || `Gemini API 오류 (${r.status})` });
+    }
+
+    const data = await r.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const jsonStr = text.match(/\{[\s\S]*\}/)?.[0];
+    if (!jsonStr) return res.status(200).json({ strategies: [] });
+    return res.status(200).json(JSON.parse(jsonStr));
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+}

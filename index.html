@@ -3341,18 +3341,66 @@ function onT4BrandChange() {
   carrying.sort((a, b) => a.store.localeCompare(b.store, 'ko'));
 
   const el = document.getElementById('t4-brand-result');
-  const cat = sheetCatToInternal(null) || classifyBrand(brand) || '미분류';
+  const cat = classifyBrand(brand) || '미분류';
+
+  // Platform ranks
+  const platRanks = [];
+  ONLINE_PLATFORMS_V2.forEach(p => {
+    const idx = p.brands.findIndex(b => b.n === brand);
+    if (idx !== -1) platRanks.push({ plat: p.name, rank: idx + 1, color: p.color, label: p.label, total: p.brands.length });
+  });
+
+  // Multi-channel info
+  const multiInfo = MULTI_V2.find(b => b.n === brand);
+
+  // Offline BRAND_CAT
+  const offlineCat = BRAND_CAT[brand];
+
+  const platHTML = platRanks.length ? `
+    <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+      color:var(--text-sec);margin:14px 0 8px">온라인 플랫폼 랭킹</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      ${platRanks.map(pr => `
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;
+          background:var(--surface-3);border-radius:9px;border:1px solid var(--border)">
+          <div style="width:28px;height:28px;border-radius:7px;background:${pr.color}22;
+            color:${pr.color};display:flex;align-items:center;justify-content:center;
+            font-size:10px;font-weight:800;flex-shrink:0">${pr.plat.replace(' ','').slice(0,2)}</div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:#fff">${pr.plat}</div>
+            <div style="font-size:10px;color:var(--text-sec)">${pr.label} <b style="color:${pr.color}">${pr.rank}위</b> / ${pr.total}</div>
+          </div>
+        </div>`).join('')}
+    </div>` : '';
+
+  const badgesHTML = [
+    multiInfo ? `<span style="font-size:10px;padding:2px 8px;border-radius:9999px;
+      background:rgba(255,100,50,.15);color:#FF6432;border:1px solid rgba(255,100,50,.25);font-weight:700">MULTI PLATFORM</span>` : '',
+    offlineCat ? `<span style="font-size:10px;padding:2px 8px;border-radius:9999px;
+      background:rgba(100,180,255,.12);color:#64B4FF;border:1px solid rgba(100,180,255,.2);font-weight:700">오프라인 ${offlineCat}</span>` : '',
+    platRanks.length === 0 ? `<span style="font-size:10px;padding:2px 8px;border-radius:9999px;
+      background:rgba(255,255,255,.06);color:var(--text-dim);border:1px solid rgba(255,255,255,.08)">플랫폼 미등재</span>` : '',
+  ].filter(Boolean).join(' ');
 
   el.innerHTML = `
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;
-      padding:12px 14px;background:rgba(30,215,96,.06);border-radius:10px;border:1px solid rgba(30,215,96,.15)">
-      <span style="font-size:18px;font-weight:800;color:#fff">${brand}</span>
-      <span style="font-size:11px;padding:3px 10px;border-radius:9999px;
-        background:rgba(30,215,96,.15);color:var(--green);border:1px solid rgba(30,215,96,.25)">${cat}</span>
-      <span style="font-size:12px;color:var(--text-sec);margin-left:auto">
-        <b style="color:#fff">${carrying.length}</b>개 점포 입점 &nbsp;·&nbsp;
-        <b style="color:var(--text-dim)">${notCarrying.length}</b>개 미입점
-      </span>
+    <div style="padding:14px 16px;background:rgba(30,215,96,.06);border-radius:12px;
+      border:1px solid rgba(30,215,96,.15);margin-bottom:16px">
+      <div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+            <span style="font-size:19px;font-weight:800;color:#fff">${brand}</span>
+            <span style="font-size:11px;padding:3px 10px;border-radius:9999px;
+              background:rgba(30,215,96,.15);color:var(--green);border:1px solid rgba(30,215,96,.25)">${cat}</span>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">${badgesHTML}</div>
+          ${platHTML}
+        </div>
+        <div style="text-align:right;white-space:nowrap;font-size:12px;color:var(--text-sec);flex-shrink:0;padding-top:2px">
+          <b style="color:#fff;font-size:15px">${carrying.length}</b>개 입점<br>
+          <b style="color:var(--text-dim)">${notCarrying.length}</b>개 미입점
+        </div>
+      </div>
+      <div id="t4-naver-price" style="margin-top:10px;font-size:12px;color:var(--text-sec)">가격대 조회 중…</div>
     </div>
 
     <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
@@ -3376,6 +3424,30 @@ function onT4BrandChange() {
             border:1px solid rgba(255,255,255,.06)">${s}</span>`).join('')}
       </div>` : ''}
   `;
+
+  // Async: fetch Naver price range
+  (async () => {
+    try {
+      const r = await fetch(`/api/naver?q=${encodeURIComponent(brand)}&display=20`);
+      const priceEl = document.getElementById('t4-naver-price');
+      if (!priceEl) return;
+      if (!r.ok) { priceEl.textContent = ''; return; }
+      const data = await r.json();
+      const items = (data.items || []).filter(i => i.lprice && Number(i.lprice) > 0);
+      if (!items.length) { priceEl.textContent = ''; return; }
+      const prices = items.map(i => Number(i.lprice));
+      const minP = Math.min(...prices);
+      const maxP = Math.max(...prices);
+      const avgP = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length);
+      const fmt = n => n >= 10000 ? `${(n/10000).toFixed(1)}만원` : `${n.toLocaleString()}원`;
+      priceEl.innerHTML = `<span style="color:var(--text-sec)">네이버쇼핑 가격대</span>&nbsp;
+        <b style="color:#fff">${fmt(minP)} ~ ${fmt(maxP)}</b>
+        <span style="color:var(--text-sec)">&nbsp;(평균 ${fmt(avgP)}, ${items.length}개 상품)</span>`;
+    } catch (e) {
+      const priceEl = document.getElementById('t4-naver-price');
+      if (priceEl) priceEl.textContent = '';
+    }
+  })();
 }
 
 // ── Naver Brand Keyword (Tab 5) ──

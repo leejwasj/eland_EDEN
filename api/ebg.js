@@ -1,5 +1,5 @@
 const CLAUDE_MODEL = 'claude-haiku-4-5-20251001';
-const GEMINI_MODEL = 'gemini-1.5-flash';
+const GEMINI_MODEL = 'gemini-2.0-flash';
 
 const EBG_PROMPT = (brand, multiNote) =>
   `이 문서는 이랜드리테일 MD가 브랜드 키맨을 직접 만나고 작성한 EBG(External Brand Group) 미팅 보고서입니다.${brand ? ` 브랜드명: ${brand}` : ''}${multiNote}

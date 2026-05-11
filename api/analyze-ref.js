@@ -10,12 +10,8 @@ export default async function handler(req, res) {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) return res.status(503).json({ error: 'ANTHROPIC_API_KEY 없음' });
 
-  const { image, fileName, brand } = req.body || {};
-  if (!image) return res.status(400).json({ error: 'image 필드 필요' });
-
-  const match = image.match(/^data:([\w\/+]+);base64,(.+)$/);
-  if (!match) return res.status(400).json({ error: '유효하지 않은 파일 형식' });
-  const [, mimeType, base64Data] = match;
+  const { image, text, fileName, brand } = req.body || {};
+  if (!image && !text) return res.status(400).json({ error: 'image 또는 text 필드 필요' });
 
   const prompt = `이 문서는 "${brand || '브랜드'}" 관련 전략 레퍼런스 자료입니다.
 파일: ${fileName || '업로드 파일'}
@@ -36,6 +32,19 @@ export default async function handler(req, res) {
 
 반드시 JSON만 반환하세요. 마크다운 코드블록 없이 순수 JSON으로 응답하세요.`;
 
+  let messageContent;
+  if (text) {
+    messageContent = [{ type: 'text', text: `${prompt}\n\n문서 내용:\n${text.slice(0, 8000)}` }];
+  } else {
+    const match = image.match(/^data:([\w\/+]+);base64,(.+)$/);
+    if (!match) return res.status(400).json({ error: '유효하지 않은 파일 형식' });
+    const [, mimeType, base64Data] = match;
+    messageContent = [
+      { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64Data } },
+      { type: 'text', text: prompt }
+    ];
+  }
+
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -47,13 +56,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: MODEL,
         max_tokens: 1024,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64Data } },
-            { type: 'text', text: prompt }
-          ]
-        }]
+        messages: [{ role: 'user', content: messageContent }]
       })
     });
 

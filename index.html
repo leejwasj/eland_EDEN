@@ -750,6 +750,7 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
 </head>
 <body>
 <div class="bg-orb bg-orb-1"></div>
@@ -1513,8 +1514,9 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
         </div>
         <div class="fg" style="margin-bottom:10px">
           <label>점포 선택</label>
-          <select id="ppt-store" onchange="onPptStoreChange()">
-            <option value="">-- 점포를 선택하세요 --</option>
+          <div id="ppt-store-chips" style="display:none;flex-wrap:wrap;gap:5px;margin-bottom:6px"></div>
+          <select id="ppt-store" onchange="addPptStore(this.value);this.value=''">
+            <option value="">+ 점포 추가</option>
           </select>
         </div>
         <div class="fg" style="margin-bottom:0">
@@ -1552,7 +1554,7 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
           <div class="ref-upload-zone" onclick="document.getElementById('ref-file-input').click()" id="ref-add-btn">
             + 파일 추가 (PDF · 이미지 · 보고서)
           </div>
-          <input type="file" id="ref-file-input" multiple accept=".pdf,image/*" style="display:none" onchange="onRefFileChange(event)">
+          <input type="file" id="ref-file-input" multiple accept=".pdf,.docx,image/*" style="display:none" onchange="onRefFileChange(event)">
         </div>
 
         <div>
@@ -1647,14 +1649,7 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
       <div class="panel">
         <div class="ph">슬라이드 미리보기</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px" id="ppt-snav-wrap">
-          <button class="ppt-snav on" onclick="selectPptSlide(0)">1. 상권분석</button>
-          <button class="ppt-snav" onclick="selectPptSlide(1)">2. 점포분석</button>
-          <button class="ppt-snav" onclick="selectPptSlide(2)">3. 브랜드 현황</button>
-          <button class="ppt-snav" onclick="selectPptSlide(3)">4. EBG 전략 1</button>
-          <button class="ppt-snav" onclick="selectPptSlide(4)">5. EBG 전략 2</button>
-          <button class="ppt-snav" onclick="selectPptSlide(5)">6. EBG 전략 3</button>
-          <button class="ppt-snav" onclick="selectPptSlide(6)">7. 추가 내용</button>
-          <!-- 레퍼런스 슬라이드 버튼은 JS로 동적 추가 -->
+          <!-- 슬라이드 버튼 JS로 동적 생성 -->
         </div>
         <div id="ppt-slide-area">
           <div class="ppt-canvas">
@@ -5711,7 +5706,7 @@ function deleteEbg() {
 // ── 전략 PPT ──
 let PPT_CUR = 0;
 let PPT_DATA = {
-  brand:'', store:'', ebgId:null,
+  brand:'', store:'', stores:[], ebgId:null,
   storeData:null, areaInfo:null,
   dartMime:null, dartBase64:null, dartExtraPages:[], dartAnalysis:null,
   references:[], // [{fileName, imageDataURL, mimeType, base64, analysis}]
@@ -5872,9 +5867,45 @@ function initPptTab() {
       });
     }
   });
+  renderStoreChips();
   renderFloorAdmin();
   renderFloorList();
+  updatePptNav();
   renderPptSlide();
+}
+
+function addPptStore(name) {
+  if (!name) return;
+  if (PPT_DATA.stores.find(s => s.name === name)) return;
+  PPT_DATA.stores.push({ name, storeData: STORES[name]||null, areaInfo: STORE_AREA_INFO[name]||null });
+  PPT_DATA.store = PPT_DATA.stores[0].name;
+  PPT_DATA.storeData = PPT_DATA.stores[0].storeData;
+  PPT_DATA.areaInfo = PPT_DATA.stores[0].areaInfo;
+  renderStoreChips();
+  renderFloorList();
+  if (PPT_DATA.generated) { updatePptNav(); renderPptSlide(); }
+}
+
+function removePptStore(name) {
+  PPT_DATA.stores = PPT_DATA.stores.filter(s => s.name !== name);
+  PPT_DATA.store = PPT_DATA.stores[0]?.name || '';
+  PPT_DATA.storeData = PPT_DATA.stores[0]?.storeData || null;
+  PPT_DATA.areaInfo = PPT_DATA.stores[0]?.areaInfo || null;
+  renderStoreChips();
+  renderFloorList();
+  if (PPT_DATA.generated) { updatePptNav(); renderPptSlide(); }
+}
+
+function renderStoreChips() {
+  const el = document.getElementById('ppt-store-chips');
+  if (!el) return;
+  el.style.display = PPT_DATA.stores.length ? 'flex' : 'none';
+  el.innerHTML = PPT_DATA.stores.map(s =>
+    `<div style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px 4px 12px;background:var(--surface-3);border:1px solid var(--green);border-radius:9999px;font-size:12px;color:#fff">
+      ${s.name}
+      <button onclick="removePptStore('${s.name.replace(/'/g,"\\'")}')" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:12px;padding:0;line-height:1;margin-left:2px">✕</button>
+    </div>`
+  ).join('');
 }
 
 function onPptBrandChange() {
@@ -5894,13 +5925,6 @@ function onPptBrandChange() {
   }
 }
 
-function onPptStoreChange() {
-  const store = document.getElementById('ppt-store').value;
-  PPT_DATA.store = store;
-  PPT_DATA.storeData = STORES[store] || null;
-  PPT_DATA.areaInfo = STORE_AREA_INFO[store] || null;
-  renderFloorList();
-}
 
 function onPptEbgChange() {
   const id = document.getElementById('ppt-ebg').value;
@@ -6014,7 +6038,7 @@ async function generateCustomSlide(idx) {
 
   try {
     const brand = document.getElementById('ppt-brand').value.trim();
-    const store = document.getElementById('ppt-store').value;
+    const store = PPT_DATA.store;
     const ebgEntry = PPT_DATA.ebgAnalysis;
     const ebgContext = ebgEntry ? (ebgEntry.keyQuestion||'') + ' ' + (ebgEntry.insights||[]).join(' ') : '';
     const refSummary = PPT_DATA.references.filter(r=>r.analysis)
@@ -6118,8 +6142,18 @@ async function processRefFile(file) {
   renderRefList();
 
   try {
-    let imageDataURL, mimeType, base64;
-    if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+    let imageDataURL = null, mimeType = null, base64 = null, extractedText = null;
+    const isDocx = file.name.toLowerCase().endsWith('.docx') ||
+      file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+
+    if (isDocx) {
+      if (typeof mammoth === 'undefined') throw new Error('mammoth.js 로드 실패');
+      const buf = await file.arrayBuffer();
+      const result = await mammoth.extractRawText({ arrayBuffer: buf });
+      extractedText = result.value.trim();
+      if (!extractedText) throw new Error('텍스트를 추출할 수 없는 파일입니다');
+    } else if (isPdf) {
       if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js 로드 실패');
       pdfjsLib.GlobalWorkerOptions.workerSrc =
         'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -6139,8 +6173,11 @@ async function processRefFile(file) {
         r.readAsDataURL(file);
       });
     }
-    const m = imageDataURL.match(/^data:([\w\/+]+);base64,(.+)$/);
-    mimeType = m[1]; base64 = m[2];
+
+    if (imageDataURL) {
+      const m = imageDataURL.match(/^data:([\w\/+]+);base64,(.+)$/);
+      mimeType = m[1]; base64 = m[2];
+    }
 
     PPT_DATA.references[idx].imageDataURL = imageDataURL;
     PPT_DATA.references[idx].mimeType = mimeType;
@@ -6152,9 +6189,12 @@ async function processRefFile(file) {
     PPT_DATA.references[idx].analyzing = true;
     renderRefList();
     const brand = document.getElementById('ppt-brand').value.trim();
+    const payload = extractedText
+      ? { text: extractedText, fileName: file.name, brand }
+      : { image: imageDataURL, fileName: file.name, brand };
     const r = await fetch('/api/analyze-ref', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: imageDataURL, fileName: file.name, brand })
+      body: JSON.stringify(payload)
     });
     const d = await r.json();
     PPT_DATA.references[idx].analysis = d.error ? null : d;
@@ -6233,12 +6273,13 @@ async function fetchPptNews() {
 
 async function generatePptContent() {
   const brand = document.getElementById('ppt-brand').value.trim();
-  const store = document.getElementById('ppt-store').value;
-  if (!brand || !store) { alert('브랜드명과 점포를 선택하세요'); return; }
+  if (!brand || !PPT_DATA.stores.length) { alert('브랜드명과 점포를 선택하세요'); return; }
 
-  PPT_DATA.brand = brand; PPT_DATA.store = store;
-  PPT_DATA.storeData = STORES[store] || PPT_DATA.storeData;
-  PPT_DATA.areaInfo = STORE_AREA_INFO[store] || PPT_DATA.areaInfo;
+  PPT_DATA.brand = brand;
+  PPT_DATA.store = PPT_DATA.stores[0].name;
+  PPT_DATA.storeData = PPT_DATA.stores[0].storeData || PPT_DATA.storeData;
+  PPT_DATA.areaInfo = PPT_DATA.stores[0].areaInfo || PPT_DATA.areaInfo;
+  const store = PPT_DATA.stores.map(s => s.name).join(', ');
   const ebgSel = document.getElementById('ppt-ebg').value;
   if (ebgSel) {
     const entry = (typeof EBG_ENTRIES!=='undefined'?EBG_ENTRIES:[]).find(e=>e.id===ebgSel);
@@ -6302,39 +6343,38 @@ async function generatePptContent() {
   document.getElementById('ppt-dl-btn').disabled = false;
   document.getElementById('ppt-prev-btn').disabled = false;
   document.getElementById('ppt-next-btn').disabled = false;
+  updatePptNav();
   renderPptSlide();
 }
 
 function getPptBuilders() {
-  const base = [pptS1, pptS2, pptS3, ()=>pptStrategy(0), ()=>pptStrategy(1), ()=>pptStrategy(2), pptS7];
-  const refs = PPT_DATA.references.filter(r=>r.analysis).map((_,i)=>()=>pptSRef(i));
-  const customs = PPT_DATA.customSlides.filter(c=>c.generated).map((_,i)=>()=>pptSCustom(i));
-  return [...base, ...refs, ...customs];
+  const storeSlides = PPT_DATA.stores.length
+    ? PPT_DATA.stores.flatMap(s => [
+        { fn: ()=>pptS1(s), label: PPT_DATA.stores.length>1 ? s.name+' 상권' : '상권분석' },
+        { fn: ()=>pptS2(s), label: PPT_DATA.stores.length>1 ? s.name+' 점포' : '점포분석' }
+      ])
+    : [{ fn: pptS1, label: '상권분석' }, { fn: pptS2, label: '점포분석' }];
+  const analyzedRefs = PPT_DATA.references.filter(r=>r.analysis);
+  const refs = analyzedRefs.map((_,i)=>({ fn: ()=>pptSRef(i), label: `레퍼런스${analyzedRefs.length>1?' '+(i+1):''}` }));
+  const customs = PPT_DATA.customSlides.filter(c=>c.generated).map((c,i)=>({ fn: ()=>pptSCustom(i), label: (c.title||'커스텀').slice(0,8) }));
+  return [
+    ...storeSlides,
+    { fn: pptS3, label: '브랜드 현황' },
+    { fn: ()=>pptStrategy(0), label: 'EBG 전략 1' },
+    { fn: ()=>pptStrategy(1), label: 'EBG 전략 2' },
+    { fn: ()=>pptStrategy(2), label: 'EBG 전략 3' },
+    { fn: pptS7, label: '추가 내용' },
+    ...refs, ...customs
+  ];
 }
 
 function updatePptNav() {
   const wrap = document.getElementById('ppt-snav-wrap');
   if (!wrap) return;
-  wrap.querySelectorAll('[data-ref],[data-custom]').forEach(b=>b.remove());
-  const refs = PPT_DATA.references.filter(r=>r.analysis);
-  refs.forEach((r,i)=>{
-    const btn = document.createElement('button');
-    btn.className = 'ppt-snav';
-    btn.setAttribute('data-ref', i);
-    btn.onclick = ()=>selectPptSlide(7+i);
-    btn.textContent = `${8+i}. 레퍼런스${refs.length>1?' '+(i+1):''}`;
-    wrap.appendChild(btn);
-  });
-  const customs = PPT_DATA.customSlides.filter(c=>c.generated);
-  customs.forEach((c,i)=>{
-    const slideNum = 8 + refs.length + i;
-    const btn = document.createElement('button');
-    btn.className = 'ppt-snav';
-    btn.setAttribute('data-custom', i);
-    btn.onclick = ()=>selectPptSlide(7+refs.length+i);
-    btn.textContent = `${slideNum}. ${(c.title||'커스텀').slice(0,8)}`;
-    wrap.appendChild(btn);
-  });
+  const builders = getPptBuilders();
+  wrap.innerHTML = builders.map((b, i) =>
+    `<button class="ppt-snav${i===PPT_CUR?' on':''}" onclick="selectPptSlide(${i})">${i+1}. ${b.label}</button>`
+  ).join('');
 }
 
 function selectPptSlide(n) {
@@ -6356,7 +6396,7 @@ function renderPptSlide() {
   }
   const builders = getPptBuilders();
   const idx = Math.min(PPT_CUR, builders.length-1);
-  area.innerHTML = `<div class="ppt-canvas">${builders[idx]()}</div>`;
+  area.innerHTML = `<div class="ppt-canvas">${builders[idx].fn()}</div>`;
 }
 
 function pptKpiBox(lbl, val, accent, colSpan) {
@@ -6372,8 +6412,8 @@ function pptGaugeBar(val, max, color) {
     <div style="background:${color};height:6px;border-radius:9999px;width:${pct}%"></div></div>`;
 }
 
-function pptS1() {
-  const s = PPT_DATA.storeData||{}, a = PPT_DATA.areaInfo||{};
+function pptS1(storeObj) {
+  const s = storeObj?.storeData || PPT_DATA.storeData||{}, a = storeObj?.areaInfo || PPT_DATA.areaInfo||{};
   const score = parseFloat(s.avg)||0;
   const gColors = {S:'#f59e0b',A:'#22c55e',B:'#3b82f6',C:'#f97316',D:'#ef4444'};
   const g = s.avg ? grade(s.avg) : {g:'-',l:'-'};
@@ -6381,7 +6421,7 @@ function pptS1() {
   return `<div class="ppt-slide">
     <div class="ppt-head" style="background:#0f172a">
       <div class="ppt-head-eye" style="color:#1ed760">MARKET ANALYSIS · 01</div>
-      <div class="ppt-head-title">상권 분석 — ${PPT_DATA.store||'점포'}</div>
+      <div class="ppt-head-title">상권 분석 — ${storeObj?.name || PPT_DATA.store||'점포'}</div>
     </div>
     <div class="ppt-body" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px 16px">
       <div>
@@ -6415,8 +6455,8 @@ function pptS1() {
   </div>`;
 }
 
-function pptS2() {
-  const s = PPT_DATA.storeData||{}, a = PPT_DATA.areaInfo||{};
+function pptS2(storeObj) {
+  const s = storeObj?.storeData || PPT_DATA.storeData||{}, a = storeObj?.areaInfo || PPT_DATA.areaInfo||{};
   const g = s.avg ? grade(s.avg) : {g:'-',l:'-'};
   const gColors = {S:'#f59e0b',A:'#22c55e',B:'#3b6fd4',C:'#f97316',D:'#ef4444'};
   const gc = gColors[g.g]||'#64748b';
@@ -6431,7 +6471,7 @@ function pptS2() {
   return `<div class="ppt-slide">
     <div class="ppt-head" style="background:#1e293b">
       <div class="ppt-head-eye" style="color:#1ed760">STORE ANALYSIS · 02</div>
-      <div class="ppt-head-title">점포 분석 — ${PPT_DATA.store||'점포'}</div>
+      <div class="ppt-head-title">점포 분석 — ${storeObj?.name || PPT_DATA.store||'점포'}</div>
     </div>
     <div class="ppt-body" style="display:grid;grid-template-columns:90px 1fr;gap:10px;padding:10px 16px">
       <div style="display:flex;flex-direction:column;gap:6px">
@@ -6610,7 +6650,7 @@ function pptS7() {
 }
 
 async function downloadPptx() {
-  if (!PPT_DATA.store || !PPT_DATA.brand) { alert('먼저 PPT를 생성하세요'); return; }
+  if (!PPT_DATA.brand || !PPT_DATA.generated) { alert('먼저 PPT를 생성하세요'); return; }
   const btn = document.getElementById('ppt-dl-btn');
   btn.disabled = true;
   btn.innerHTML = '⏳ 생성 중...';
@@ -6620,8 +6660,10 @@ async function downloadPptx() {
     pptx.title = `${PPT_DATA.brand} 입점 전략 PPT`;
     const BG = 'F8FAFC', DARK = '0f172a', GREEN = '1ed760', WHITE = 'FFFFFF', SLATE = '64748B';
 
-    const brand = PPT_DATA.brand, store = PPT_DATA.store;
-    const s = PPT_DATA.storeData||{}, a = PPT_DATA.areaInfo||{};
+    const brand = PPT_DATA.brand;
+    const storeList = PPT_DATA.stores.length
+      ? PPT_DATA.stores
+      : [{ name: PPT_DATA.store, storeData: PPT_DATA.storeData, areaInfo: PPT_DATA.areaInfo }];
 
     function addHeader(sl, bgHex, eyeTxt, eyeColor, titleTxt, accentLeft) {
       sl.addShape(pptx.ShapeType.rect, {x:0,y:0,w:'100%',h:1.35,fill:{color:bgHex}});
@@ -6643,63 +6685,63 @@ async function downloadPptx() {
       if (pct>0) sl.addShape(pptx.ShapeType.rect,{x,y,w:w*pct,h:0.1,fill:{color},line:{color,width:0},radius:5});
     }
 
-    // ── Slide 1 ──
-    const sl1 = pptx.addSlide(); sl1.background = {color:BG};
-    addHeader(sl1, DARK, 'MARKET ANALYSIS · 01', GREEN, `상권 분석 — ${store}`);
-    const score1 = parseFloat(s.avg)||0;
-    const g1 = s.avg ? grade(s.avg) : {g:'-',l:'-'};
+    // ── Slides 1+2: 점포별 상권분석·점포분석 ──
     const gcMap = {S:'F59E0B',A:'22C55E',B:'3B6FD4',C:'F97316',D:'EF4444'};
-    const gc1 = gcMap[g1.g]||SLATE;
-    // 왼쪽: 6개 KPI 카드 (3x2)
-    const m1=[
-      [GREEN,'상권지수',(s.avg||'-')+' / 100'],['3B82F6','소득 등급',(a.incomeGrade||'-')+' '+(a.incomeLbl||'')],
-      ['F59E0B','핵심 연령대',a.ageCore||'-'],['EC4899','성별 특성',a.genderLean||'-'],
-      ['06B6D4','유동인구',a.popEst?a.popEst[0]+'~'+a.popEst[1]+'만명':'-'],['8B5CF6','외국인 비율',a.foreignPct?a.foreignPct+'%':'-'],
-    ];
-    m1.forEach(([c,l,v],i)=>{ const col=i%3,row=Math.floor(i/3); addCard(sl1,0.35+col*2.8,1.5+row*1.1,2.65,1.0,c,l,v); });
-    // 오른쪽: 등급 + 게이지 + 상권 설명
-    sl1.addShape(pptx.ShapeType.rect,{x:8.8,y:1.5,w:1.0,h:2.2,fill:{color:WHITE},line:{color:'E2E8F0',width:0.75}});
-    sl1.addShape(pptx.ShapeType.rect,{x:8.8,y:1.5,w:0.06,h:2.2,fill:{color:gc1},line:{color:gc1,width:0}});
-    sl1.addText('등급',{x:8.87,y:1.6,w:0.8,h:0.2,fontSize:7,color:SLATE,bold:true,align:'center'});
-    sl1.addText(g1.g,{x:8.87,y:1.8,w:0.8,h:0.6,fontSize:28,color:gc1,bold:true,align:'center'});
-    addGaugeBar(sl1, 8.87, 2.5, 0.8, score1, 100, gc1);
-    sl1.addText(score1+'/100',{x:8.87,y:2.65,w:0.8,h:0.2,fontSize:7,color:SLATE,align:'center'});
-    sl1.addShape(pptx.ShapeType.rect,{x:0.35,y:3.75,w:9.3,h:0.65,fill:{color:WHITE},line:{color:'E2E8F0',width:0.75}});
-    sl1.addShape(pptx.ShapeType.rect,{x:0.35,y:3.75,w:0.06,h:0.65,fill:{color:gc1},line:{color:gc1,width:0}});
-    sl1.addText(g1.l||(a.district||''),{x:0.48,y:3.85,w:9.1,h:0.45,fontSize:9,color:'475569',lineSpacing:13});
+    storeList.forEach((storeObj, si) => {
+      const store = storeObj.name, s = storeObj.storeData||{}, a = storeObj.areaInfo||{};
+      const eyeIdx = n => String(si*2+n+1).padStart(2,'0');
 
-    // ── Slide 2 ──
-    const sl2 = pptx.addSlide(); sl2.background = {color:BG};
-    addHeader(sl2, '1e293b', 'STORE ANALYSIS · 02', GREEN, `점포 분석 — ${store}`);
-    const g2 = s.avg ? grade(s.avg) : {g:'-',l:'-'};
-    const gc2 = gcMap[g2.g]||SLATE;
-    const score2 = parseFloat(s.avg)||0;
-    // 왼쪽: 등급 + 게이지 + 위치
-    sl2.addShape(pptx.ShapeType.rect,{x:0.35,y:1.5,w:2.0,h:2.8,fill:{color:WHITE},line:{color:'E2E8F0',width:0.75}});
-    sl2.addShape(pptx.ShapeType.rect,{x:0.35,y:1.5,w:0.06,h:2.8,fill:{color:gc2},line:{color:gc2,width:0}});
-    sl2.addText('상권 등급',{x:0.47,y:1.62,w:1.8,h:0.22,fontSize:7,color:SLATE,bold:true,charSpacing:0.8,align:'center'});
-    sl2.addText(g2.g,{x:0.47,y:1.85,w:1.8,h:0.9,fontSize:40,color:gc2,bold:true,align:'center'});
-    addGaugeBar(sl2, 0.55, 2.85, 1.6, score2, 100, gc2);
-    sl2.addText(score2+' / 100',{x:0.47,y:3.0,w:1.8,h:0.2,fontSize:8,color:SLATE,align:'center'});
-    if (a.district) sl2.addText('📍 '+a.district+(a.city?' · '+a.city:''),{x:0.47,y:3.85,w:1.8,h:0.35,fontSize:8,color:'64748B',align:'center',lineSpacing:12});
-    // 오른쪽: KPI + 게이지
-    const kpis2=[
-      {c:'8B5CF6',l:'소득 수준',v:(a.incomeGrade||'-')+' '+(a.incomeLbl||''),pct:{S:95,A:80,'B+':70,B:60,'B-':50,C:40,D:20}[a.incomeGrade]||50},
-      {c:'F59E0B',l:'핵심 연령대',v:a.ageCore||'-',pct:65},
-      {c:'EC4899',l:'성별 특성',v:a.genderLean||'-',pct:60},
-      {c:'06B6D4',l:'유동인구 추정',v:a.popEst?a.popEst[0]+'~'+a.popEst[1]+'만명':'-',pct:Math.min(100,(a.popEst?.[1]||0)/50*100)},
-      {c:'1ED760',l:'외국인 비율',v:a.foreignPct?a.foreignPct+'%':'-',pct:Math.min(100,(a.foreignPct||0)*3)},
-    ];
-    kpis2.forEach(({c,l,v,pct},i)=>{
-      const ky=1.5+i*0.58;
-      sl2.addShape(pptx.ShapeType.rect,{x:2.5,y:ky,w:7.15,h:0.52,fill:{color:WHITE},line:{color:'E2E8F0',width:0.75}});
-      sl2.addShape(pptx.ShapeType.rect,{x:2.5,y:ky,w:0.06,h:0.52,fill:{color:c},line:{color:c,width:0}});
-      sl2.addText(l,{x:2.62,y:ky+0.08,w:3,h:0.2,fontSize:8,color:SLATE});
-      sl2.addText(String(v),{x:5.7,y:ky+0.08,w:1.9,h:0.2,fontSize:9,color:DARK,bold:true,align:'right'});
-      addGaugeBar(sl2, 2.62, ky+0.35, 7.0, pct||0, 100, c);
+      const sl1 = pptx.addSlide(); sl1.background = {color:BG};
+      addHeader(sl1, DARK, `MARKET ANALYSIS · ${eyeIdx(0)}`, GREEN, `상권 분석 — ${store}`);
+      const score1 = parseFloat(s.avg)||0;
+      const g1 = s.avg ? grade(s.avg) : {g:'-',l:'-'};
+      const gc1 = gcMap[g1.g]||SLATE;
+      const m1=[
+        [GREEN,'상권지수',(s.avg||'-')+' / 100'],['3B82F6','소득 등급',(a.incomeGrade||'-')+' '+(a.incomeLbl||'')],
+        ['F59E0B','핵심 연령대',a.ageCore||'-'],['EC4899','성별 특성',a.genderLean||'-'],
+        ['06B6D4','유동인구',a.popEst?a.popEst[0]+'~'+a.popEst[1]+'만명':'-'],['8B5CF6','외국인 비율',a.foreignPct?a.foreignPct+'%':'-'],
+      ];
+      m1.forEach(([c,l,v],i)=>{ const col=i%3,row=Math.floor(i/3); addCard(sl1,0.35+col*2.8,1.5+row*1.1,2.65,1.0,c,l,v); });
+      sl1.addShape(pptx.ShapeType.rect,{x:8.8,y:1.5,w:1.0,h:2.2,fill:{color:WHITE},line:{color:'E2E8F0',width:0.75}});
+      sl1.addShape(pptx.ShapeType.rect,{x:8.8,y:1.5,w:0.06,h:2.2,fill:{color:gc1},line:{color:gc1,width:0}});
+      sl1.addText('등급',{x:8.87,y:1.6,w:0.8,h:0.2,fontSize:7,color:SLATE,bold:true,align:'center'});
+      sl1.addText(g1.g,{x:8.87,y:1.8,w:0.8,h:0.6,fontSize:28,color:gc1,bold:true,align:'center'});
+      addGaugeBar(sl1, 8.87, 2.5, 0.8, score1, 100, gc1);
+      sl1.addText(score1+'/100',{x:8.87,y:2.65,w:0.8,h:0.2,fontSize:7,color:SLATE,align:'center'});
+      sl1.addShape(pptx.ShapeType.rect,{x:0.35,y:3.75,w:9.3,h:0.65,fill:{color:WHITE},line:{color:'E2E8F0',width:0.75}});
+      sl1.addShape(pptx.ShapeType.rect,{x:0.35,y:3.75,w:0.06,h:0.65,fill:{color:gc1},line:{color:gc1,width:0}});
+      sl1.addText(g1.l||(a.district||''),{x:0.48,y:3.85,w:9.1,h:0.45,fontSize:9,color:'475569',lineSpacing:13});
+
+      const sl2 = pptx.addSlide(); sl2.background = {color:BG};
+      addHeader(sl2, '1e293b', `STORE ANALYSIS · ${eyeIdx(1)}`, GREEN, `점포 분석 — ${store}`);
+      const g2 = s.avg ? grade(s.avg) : {g:'-',l:'-'};
+      const gc2 = gcMap[g2.g]||SLATE;
+      const score2 = parseFloat(s.avg)||0;
+      sl2.addShape(pptx.ShapeType.rect,{x:0.35,y:1.5,w:2.0,h:2.8,fill:{color:WHITE},line:{color:'E2E8F0',width:0.75}});
+      sl2.addShape(pptx.ShapeType.rect,{x:0.35,y:1.5,w:0.06,h:2.8,fill:{color:gc2},line:{color:gc2,width:0}});
+      sl2.addText('상권 등급',{x:0.47,y:1.62,w:1.8,h:0.22,fontSize:7,color:SLATE,bold:true,charSpacing:0.8,align:'center'});
+      sl2.addText(g2.g,{x:0.47,y:1.85,w:1.8,h:0.9,fontSize:40,color:gc2,bold:true,align:'center'});
+      addGaugeBar(sl2, 0.55, 2.85, 1.6, score2, 100, gc2);
+      sl2.addText(score2+' / 100',{x:0.47,y:3.0,w:1.8,h:0.2,fontSize:8,color:SLATE,align:'center'});
+      if (a.district) sl2.addText('📍 '+a.district+(a.city?' · '+a.city:''),{x:0.47,y:3.85,w:1.8,h:0.35,fontSize:8,color:'64748B',align:'center',lineSpacing:12});
+      const kpis2=[
+        {c:'8B5CF6',l:'소득 수준',v:(a.incomeGrade||'-')+' '+(a.incomeLbl||''),pct:{S:95,A:80,'B+':70,B:60,'B-':50,C:40,D:20}[a.incomeGrade]||50},
+        {c:'F59E0B',l:'핵심 연령대',v:a.ageCore||'-',pct:65},
+        {c:'EC4899',l:'성별 특성',v:a.genderLean||'-',pct:60},
+        {c:'06B6D4',l:'유동인구 추정',v:a.popEst?a.popEst[0]+'~'+a.popEst[1]+'만명':'-',pct:Math.min(100,(a.popEst?.[1]||0)/50*100)},
+        {c:'1ED760',l:'외국인 비율',v:a.foreignPct?a.foreignPct+'%':'-',pct:Math.min(100,(a.foreignPct||0)*3)},
+      ];
+      kpis2.forEach(({c,l,v,pct},i)=>{
+        const ky=1.5+i*0.58;
+        sl2.addShape(pptx.ShapeType.rect,{x:2.5,y:ky,w:7.15,h:0.52,fill:{color:WHITE},line:{color:'E2E8F0',width:0.75}});
+        sl2.addShape(pptx.ShapeType.rect,{x:2.5,y:ky,w:0.06,h:0.52,fill:{color:c},line:{color:c,width:0}});
+        sl2.addText(l,{x:2.62,y:ky+0.08,w:3,h:0.2,fontSize:8,color:SLATE});
+        sl2.addText(String(v),{x:5.7,y:ky+0.08,w:1.9,h:0.2,fontSize:9,color:DARK,bold:true,align:'right'});
+        addGaugeBar(sl2, 2.62, ky+0.35, 7.0, pct||0, 100, c);
+      });
+      sl2.addShape(pptx.ShapeType.rect,{x:2.5,y:4.42,w:7.15,h:0.5,fill:{color:'F0FDF4'},line:{color:GREEN,width:0.75}});
+      sl2.addText(g2.l||'',{x:2.65,y:4.52,w:6.9,h:0.3,fontSize:9,color:'166534'});
     });
-    sl2.addShape(pptx.ShapeType.rect,{x:2.5,y:4.42,w:7.15,h:0.5,fill:{color:'F0FDF4'},line:{color:GREEN,width:0.75}});
-    sl2.addText(g2.l||'',{x:2.65,y:4.52,w:6.9,h:0.3,fontSize:9,color:'166534'});
 
     // ── Slide 3 ──
     const sl3 = pptx.addSlide(); sl3.background = {color:BG};

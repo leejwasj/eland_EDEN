@@ -536,44 +536,6 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
 .kw-prod-price{font-size:12px;font-weight:700;color:var(--green)}
 .kw-prod-mall{font-size:10px;color:var(--text-dim);margin-top:2px}
 
-/* ── Auth Overlay ── */
-@keyframes authIn{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
-.auth-overlay{position:fixed;inset:0;background:rgba(10,10,10,.97);z-index:2000;
-  display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
-.auth-overlay.hidden{display:none}
-.auth-card{width:100%;max-width:400px;margin:0 20px;
-  background:rgba(24,24,24,.92);border:1px solid rgba(255,255,255,.08);
-  border-radius:20px;padding:52px 40px 44px;text-align:center;
-  backdrop-filter:blur(20px);box-shadow:0 40px 100px rgba(0,0,0,.7);
-  animation:authIn .4s cubic-bezier(.22,.68,0,1.2)}
-.auth-card-logo{font-size:26px;font-weight:800;color:#fff;letter-spacing:3px;
-  display:flex;align-items:center;justify-content:center;gap:2px;margin-bottom:6px}
-.auth-card-sub{font-size:10px;font-weight:700;color:var(--green);letter-spacing:3px;
-  text-transform:uppercase;margin-bottom:28px}
-.auth-card-desc{font-size:14px;color:var(--text-sec);line-height:1.7;margin-bottom:36px}
-.auth-divider{display:flex;align-items:center;gap:12px;margin-bottom:20px}
-.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.08)}
-.auth-divider span{font-size:11px;color:var(--text-dim)}
-.auth-google-btn{width:100%;padding:15px 20px;background:#fff;color:#1a1a1a;
-  border:none;border-radius:9999px;font-size:14px;font-weight:600;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;gap:10px;
-  transition:all .2s;letter-spacing:-.1px}
-.auth-google-btn:hover{background:#f2f2f2;transform:translateY(-1px);box-shadow:0 8px 28px rgba(0,0,0,.35)}
-.auth-google-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
-.auth-note{margin-top:20px;font-size:11px;color:var(--text-dim);line-height:1.6}
-.auth-note a{color:var(--text-sec);text-decoration:none}
-
-/* ── Header user badge ── */
-.hdr-user{display:flex;align-items:center;gap:10px;margin-left:auto;flex-shrink:0}
-.hdr-avatar{width:30px;height:30px;border-radius:50%;object-fit:cover;
-  border:1.5px solid rgba(255,255,255,.15);background:var(--surface-2)}
-.hdr-name{font-size:12px;font-weight:600;color:var(--text-sec);max-width:120px;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.hdr-signout{padding:5px 14px;border-radius:9999px;border:1px solid rgba(255,255,255,.12);
-  background:transparent;color:var(--text-sec);font-size:11px;font-weight:600;
-  cursor:pointer;transition:all .15s;white-space:nowrap}
-.hdr-signout:hover{border-color:var(--danger);color:var(--danger)}
-@media(max-width:640px){.hdr-name{display:none}.hdr-signout{padding:5px 10px;font-size:10px}}
 
 /* ── Store Selection Grid ── */
 .store-home{padding:0 0 60px}
@@ -735,32 +697,11 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
 .cat-bar-cnt{font-size:11px;color:var(--text-sec);min-width:54px;text-align:right}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div class="bg-orb bg-orb-1"></div>
 <div class="bg-orb bg-orb-2"></div>
 
-<!-- ── Auth Overlay ── -->
-<div class="auth-overlay" id="auth-overlay">
-  <div class="auth-card">
-    <div class="auth-card-logo">EDEN<span class="eden-dot"></span></div>
-    <div class="auth-card-sub">Brand Intelligence</div>
-    <p class="auth-card-desc">이랜드리테일 MD 전용<br>상권 분석 플랫폼입니다</p>
-    <div class="auth-divider"><span>계속하려면 로그인하세요</span></div>
-    <button class="auth-google-btn" id="auth-google-btn" onclick="signInWithGoogle()">
-      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-      </svg>
-      Google 계정으로 로그인
-    </button>
-    <p id="auth-mobile-note" style="display:none;margin-top:16px;font-size:12px;color:#f87171;line-height:1.6;background:rgba(248,113,113,.08);border-radius:10px;padding:12px 14px;text-align:left"></p>
-    <p class="auth-note">이랜드리테일 구성원 전용 서비스입니다<br>문의: <a href="mailto:easywonee@gmail.com">easywonee@gmail.com</a></p>
-  </div>
-</div>
 
 <div class="lov" id="lov">
   <div class="spin"></div>
@@ -769,11 +710,6 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
 
 <header class="hdr">
   <span class="eden-wm">EDEN<span class="eden-dot"></span></span>
-  <div class="hdr-user" id="hdr-user" style="display:none">
-    <img class="hdr-avatar" id="hdr-avatar" src="" alt="">
-    <span class="hdr-name" id="hdr-name"></span>
-    <button class="hdr-signout" onclick="signOut()">로그아웃</button>
-  </div>
 </header>
 <nav class="nav">
   <button class="nb on" onclick="goTab(0)">상권분석</button>
@@ -3823,85 +3759,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   renderKwRecent();
 });
 
-// ── Supabase Auth ──
-const _supa = window.supabase.createClient(
-  'https://ejorvcgogayuutsxefcq.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVqb3J2Y2dvZ2F5dXV0c3hlZmNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNDE2MTYsImV4cCI6MjA5MjkxNzYxNn0.O1Xe6PC2YLn50fl48JS4eHV4XiKZmU3ZOUfruE1fwxg'
-);
-
-function _showApp(user) {
-  document.getElementById('auth-overlay').classList.add('hidden');
-  const avatar = user?.user_metadata?.avatar_url || '';
-  const name   = user?.user_metadata?.full_name || user?.email || '';
-  const el = document.getElementById('hdr-user');
-  document.getElementById('hdr-avatar').src = avatar;
-  document.getElementById('hdr-name').textContent = name;
-  el.style.display = 'flex';
-}
-
-function _showLogin() {
-  document.getElementById('auth-overlay').classList.remove('hidden');
-  document.getElementById('hdr-user').style.display = 'none';
-}
-
-function _isInAppBrowser() {
-  const ua = navigator.userAgent;
-  return /KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\/|Twitter|DaumApps|Whale/i.test(ua) ||
-    (/wv\)/.test(ua) && /Android/i.test(ua)); // Android WebView
-}
-
-const _GOOGLE_BTN_INNER = '<svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg> Google 계정으로 로그인';
-
-async function signInWithGoogle() {
-  const btn = document.getElementById('auth-google-btn');
-  const noteEl = document.getElementById('auth-mobile-note');
-
-  // 인앱 브라우저 감지 — Google OAuth 불가
-  if (_isInAppBrowser()) {
-    if (noteEl) {
-      noteEl.style.display = 'block';
-      noteEl.innerHTML = '카카오톡·네이버 등 앱 내 브라우저에서는 Google 로그인이 제한됩니다.<br>'
-        + '<b>Chrome 또는 Safari</b>에서 직접 접속해 주세요.<br>'
-        + `<a href="${window.location.href}" target="_blank" style="color:var(--green);text-decoration:underline">외부 브라우저로 열기 ↗</a>`;
-    }
-    return;
-  }
-
-  btn.disabled = true;
-  btn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid #ccc;border-top-color:#1a1a1a;border-radius:50%;animation:spin .7s linear infinite"></span>&nbsp; 연결 중...';
-
-  // 항상 production URL로 redirect — preview URL은 Supabase에 미등록
-  const redirectTo = 'https://md-scoring-deploy.vercel.app';
-
-  const { error } = await _supa.auth.signInWithOAuth({
-    provider: 'google',
-    options: { redirectTo, skipBrowserRedirect: false },
-  });
-
-  if (error) {
-    btn.disabled = false;
-    btn.innerHTML = _GOOGLE_BTN_INNER;
-    if (noteEl) {
-      noteEl.style.display = 'block';
-      noteEl.textContent = `로그인 오류: ${error.message}`;
-    }
-  }
-}
-
-async function signOut() {
-  await _supa.auth.signOut();
-}
-
-_supa.auth.onAuthStateChange((event, session) => {
-  if (session?.user) _showApp(session.user);
-  else _showLogin();
-});
-
-(async () => {
-  const { data: { session } } = await _supa.auth.getSession();
-  if (session?.user) _showApp(session.user);
-  else _showLogin();
-})();
 
 // ── NAVER DATALAB TREND ──────────────────────────────────────
 const DATALAB_CATS = [

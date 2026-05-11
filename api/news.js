@@ -5,21 +5,37 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
-  const clientId = process.env.NAVER_CLIENT_ID;
-  const clientSecret = process.env.NAVER_CLIENT_SECRET;
-  if (!clientId || !clientSecret) return res.status(503).json({ error: 'NAVER API 키 없음' });
-
   const { query } = req.body || {};
   if (!query) return res.status(400).json({ error: 'query 필드 필요' });
 
   try {
-    const r = await fetch(
-      `https://openapi.naver.com/v1/search/news.json?query=${encodeURIComponent(query)}&display=10&sort=date`,
-      { headers: { 'X-Naver-Client-Id': clientId, 'X-Naver-Client-Secret': clientSecret } }
-    );
-    const data = await r.json();
-    if (!r.ok) return res.status(r.status).json({ error: data });
-    return res.status(200).json(data);
+    const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=ko&gl=KR&ceid=KR:ko`;
+    const r = await fetch(rssUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; NewsBot/1.0)' }
+    });
+    if (!r.ok) return res.status(r.status).json({ error: `Google News RSS 오류 (${r.status})` });
+
+    const xml = await r.text();
+
+    const items = [];
+    const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+    let match;
+    while ((match = itemRegex.exec(xml)) !== null && items.length < 10) {
+      const block = match[1];
+      const title = (block.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/) ||
+                     block.match(/<title>([\s\S]*?)<\/title>/))?.[1]?.trim() || '';
+      const link = (block.match(/<link>([\s\S]*?)<\/link>/) ||
+                    block.match(/<guid[^>]*>([\s\S]*?)<\/guid>/))?.[1]?.trim() || '';
+      const pubDate = block.match(/<pubDate>([\s\S]*?)<\/pubDate>/)?.[1]?.trim() || '';
+      const description = (block.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/) ||
+                           block.match(/<description>([\s\S]*?)<\/description>/))?.[1]
+                           ?.replace(/<[^>]+>/g, '').trim() || '';
+      const source = block.match(/<source[^>]*>([\s\S]*?)<\/source>/)?.[1]?.trim() || '';
+
+      if (title) items.push({ title, link, pubDate, description, source });
+    }
+
+    return res.status(200).json({ items });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }

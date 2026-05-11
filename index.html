@@ -6528,26 +6528,42 @@ async function fetchPptNews() {
 
 async function generatePptContent() {
   const brand = document.getElementById('ppt-brand').value.trim();
-  const pptPrompt = (document.getElementById('ppt-prompt-input')?.value || '').trim();
-  if (!brand && !PPT_DATA.stores.length && !pptPrompt) {
-    alert('PPT 지시서를 작성하거나 브랜드·점포를 선택하세요');
+  const storeNames = PPT_DATA.stores.map(s=>s.name);
+  const btn = document.getElementById('ppt-gen-btn');
+  const statusEl = document.getElementById('ppt-gen-status');
+
+  // 시연 조건: 브랜드 = 다이소 AND 5개 지정 점포 모두 포함
+  const isDaiso = brand === '다이소';
+  const requiredStores = ['NC청주점','NC강서점','2001중계점','NC중앙로역점'];
+  const hasDongah = storeNames.some(n => n.includes('동아') && n.includes('강북'));
+  const hasAllRequired = requiredStores.every(r => storeNames.includes(r)) && hasDongah;
+
+  if (!brand && !PPT_DATA.stores.length) {
+    alert('브랜드명과 점포를 입력해주세요');
     return;
   }
 
-  PPT_DATA.brand = brand || '다이소';
-  PPT_DATA.pptPrompt = pptPrompt;
+  if (!isDaiso || !hasAllRequired) {
+    statusEl.style.display = 'block';
+    statusEl.style.color = '#f87171';
+    statusEl.innerHTML = `⚠ <b>분석 정보가 부족합니다</b><br><span style="font-size:11px;color:var(--text-dim);font-weight:400">해당 브랜드는 EBG 미팅·DART 공시·매장 운영 데이터가 충분하지 않아 PPT 생성이 불가합니다. 추가 자료를 업로드하거나 다른 브랜드를 선택해주세요.</span>`;
+    setTimeout(()=>{ statusEl.style.color='var(--text-sec)'; }, 6000);
+    return;
+  }
+
+  PPT_DATA.brand = brand;
   PPT_DATA.sampleMode = true;
 
-  const btn = document.getElementById('ppt-gen-btn');
-  const statusEl = document.getElementById('ppt-gen-status');
   btn.disabled = true; statusEl.style.display = 'block';
+  statusEl.style.color = 'var(--text-sec)';
   statusEl.textContent = '⏳ AI PPT 생성 중...';
 
   await new Promise(r => setTimeout(r, 1400));
 
   PPT_DATA.generated = true;
-  statusEl.textContent = '✓ PPT 생성 완료! (9장)';
-  setTimeout(()=>{ statusEl.style.display='none'; }, 2500);
+  statusEl.style.color = 'var(--green)';
+  statusEl.textContent = '✓ PPT 생성 완료! (10장)';
+  setTimeout(()=>{ statusEl.style.display='none'; statusEl.style.color='var(--text-sec)'; }, 2500);
   btn.disabled = false; btn.textContent = '다시 생성';
   document.getElementById('ppt-dl-btn').disabled = false;
   document.getElementById('ppt-prev-btn').disabled = false;

@@ -1484,37 +1484,8 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
 
         <img class="ebg-detail-img" id="ebg-detail-img" src="" alt="EBG 이미지">
 
-        <!-- AI 분석 결과 -->
-        <div id="ebg-analysis-wrap" style="margin-top:14px;display:none">
-          <!-- 요약 -->
-          <div style="padding:13px 15px;background:rgba(30,215,96,.05);border:1px solid rgba(30,215,96,.15);
-            border-radius:10px;margin-bottom:12px">
-            <div style="font-size:10px;font-weight:700;color:var(--green);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">AI 인사이트 요약</div>
-            <div id="ebg-detail-summary" style="font-size:13px;color:#ddd;line-height:1.72"></div>
-          </div>
-
-          <!-- 니즈 태그 -->
-          <div class="ebg-section-lbl">브랜드 니즈</div>
-          <div id="ebg-detail-tags" style="margin-bottom:12px"></div>
-
-          <!-- 메타 정보 grid -->
-          <div id="ebg-detail-meta-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"></div>
-
-          <!-- 키워드 -->
-          <div class="ebg-section-lbl">브랜드 키워드</div>
-          <div id="ebg-detail-keywords" style="margin-bottom:12px"></div>
-
-          <!-- 우려사항 -->
-          <div id="ebg-detail-concerns-wrap" style="display:none;padding:10px 13px;background:rgba(255,160,50,.06);
-            border:1px solid rgba(255,160,50,.2);border-radius:10px;margin-bottom:12px">
-            <div style="font-size:10px;font-weight:700;color:#FFA032;letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px">브랜드 측 우려사항</div>
-            <div id="ebg-detail-concerns" style="font-size:12px;color:var(--text-sec);line-height:1.6"></div>
-          </div>
-
-          <!-- 점포 유형 -->
-          <div class="ebg-section-lbl">추천 점포 유형</div>
-          <div id="ebg-detail-fit"></div>
-        </div>
+        <!-- AI 분석 결과 (JS로 전체 렌더) -->
+        <div id="ebg-analysis-wrap" style="margin-top:14px;display:none"></div>
 
         <!-- 분석 로딩 -->
         <div id="ebg-analysis-loading" style="display:none;text-align:center;padding:24px;color:var(--text-sec);font-size:13px">
@@ -5231,71 +5202,167 @@ function selectEbg(id) {
 }
 
 function renderEbgAnalysis(a) {
-  // 요약
-  document.getElementById('ebg-detail-summary').textContent = a.summary || '—';
+  const wrap = document.getElementById('ebg-analysis-wrap');
+  const parts = [];
 
-  // 니즈 태그
-  const tags = (a.needs || []);
-  document.getElementById('ebg-detail-tags').innerHTML = tags.length
-    ? tags.map(t => `<span class="ebg-insight-tag">🏷 ${t}</span>`).join('')
-    : '<span style="color:var(--text-dim);font-size:12px">확인된 니즈 없음</span>';
+  // ── 목표 ──
+  if (a.goal) {
+    parts.push(`
+      <div style="padding:12px 15px;background:rgba(30,215,96,.06);border:1px solid rgba(30,215,96,.18);
+        border-radius:10px;margin-bottom:12px;display:flex;align-items:flex-start;gap:10px">
+        <span style="font-size:16px;flex-shrink:0;margin-top:1px">🎯</span>
+        <div>
+          <div style="font-size:9px;font-weight:800;color:var(--green);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">목표</div>
+          <div style="font-size:13px;font-weight:600;color:#fff;line-height:1.6">${a.goal}</div>
+        </div>
+      </div>`);
+  }
 
-  // 메타 그리드 (가격대 / 확장의향 / 선호조건)
-  const metaItems = [
-    a.priceRange    ? { lbl: '가격대',      val: a.priceRange,       icon: '💰' } : null,
-    a.expansionIntent ? { lbl: '오프라인 확장 의향', val: a.expansionIntent, icon: '📈' } : null,
-    a.storeType     ? { lbl: '추천 점포 유형', val: a.storeType,       icon: '🏬' } : null,
+  // ── EBG 경위 ──
+  if (a.ebgContext) {
+    parts.push(`
+      <div style="padding:10px 13px;background:rgba(255,255,255,.03);border:1px solid var(--border);
+        border-radius:10px;margin-bottom:12px">
+        <div style="font-size:9px;font-weight:800;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px">EBG 진행</div>
+        <div style="font-size:12px;color:var(--text-sec);line-height:1.65">${a.ebgContext}</div>
+      </div>`);
+  }
+
+  // ── 핵심질문 ──
+  if (a.keyQuestion) {
+    parts.push(`
+      <div style="padding:10px 13px;background:rgba(83,213,242,.05);border:1px solid rgba(83,213,242,.15);
+        border-radius:10px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start">
+        <span style="font-size:15px;flex-shrink:0">💬</span>
+        <div>
+          <div style="font-size:9px;font-weight:800;color:#53d5f2;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">핵심질문</div>
+          <div style="font-size:12px;color:#b0e8f0;line-height:1.65;font-style:italic">"${a.keyQuestion}"</div>
+        </div>
+      </div>`);
+  }
+
+  // ── 번호별 섹션 ──
+  const sections = a.sections || [];
+  if (sections.length) {
+    parts.push(`<div style="font-size:9px;font-weight:800;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">키맨 발언 & 액션 아이템</div>`);
+    parts.push(sections.map(s => `
+      <div style="background:var(--surface-3);border:1px solid var(--border);border-radius:10px;
+        margin-bottom:8px;overflow:hidden">
+        <div style="padding:10px 13px 8px;border-bottom:1px solid rgba(255,255,255,.05)">
+          <div style="font-size:12px;font-weight:700;color:#fff;line-height:1.5">${s.title || ''}</div>
+          ${s.keyQuote ? `<div style="font-size:11px;color:var(--text-sec);margin-top:4px;line-height:1.6">"${s.keyQuote}"</div>` : ''}
+        </div>
+        ${s.actionItem ? `
+        <div style="padding:8px 13px;background:rgba(30,215,96,.05);display:flex;gap:8px;align-items:flex-start">
+          <span style="color:var(--green);font-weight:800;font-size:13px;flex-shrink:0;margin-top:1px">→</span>
+          <div style="font-size:12px;color:var(--green);line-height:1.6;font-weight:600">${s.actionItem}</div>
+        </div>` : ''}
+      </div>`).join(''));
+  }
+
+  // ── 찾은 인사이트 ──
+  const insights = a.insights || [];
+  if (insights.length) {
+    parts.push(`
+      <div style="background:rgba(30,215,96,.04);border:1px solid rgba(30,215,96,.15);border-radius:10px;
+        padding:13px 15px;margin-top:4px;margin-bottom:12px">
+        <div style="font-size:9px;font-weight:800;color:var(--green);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px"># 찾은 인사이트</div>
+        ${insights.map(ins => `
+          <div style="font-size:12px;color:#ddd;line-height:1.72;margin-bottom:6px;
+            padding-left:4px;border-left:2px solid rgba(30,215,96,.4)">${ins}</div>`).join('')}
+      </div>`);
+  }
+
+  // ── 니즈 태그 ──
+  const needs = a.needs || [];
+  if (needs.length) {
+    parts.push(`
+      <div style="margin-bottom:12px">
+        <div style="font-size:9px;font-weight:800;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px">브랜드 니즈</div>
+        <div>${needs.map(t => `<span class="ebg-insight-tag">🏷 ${t}</span>`).join('')}</div>
+      </div>`);
+  }
+
+  // ── 입점 조건 ──
+  const sc = a.storeConditions || {};
+  const condItems = [
+    sc.area     ? { lbl: '선호 평수',   val: sc.area,     icon: '📐' } : null,
+    sc.location ? { lbl: '선호 위치',   val: sc.location, icon: '📍' } : null,
+    a.expansionPlan ? { lbl: '출점 계획', val: a.expansionPlan, icon: '📅' } : null,
+    a.priceRange ? { lbl: '가격대',     val: a.priceRange, icon: '💰' } : null,
   ].filter(Boolean);
 
-  document.getElementById('ebg-detail-meta-grid').innerHTML = metaItems.map(item => `
-    <div style="padding:10px 12px;background:var(--surface-3);border:1px solid var(--border);border-radius:10px">
-      <div style="font-size:10px;color:var(--text-dim);margin-bottom:3px">${item.icon} ${item.lbl}</div>
-      <div style="font-size:12px;font-weight:600;color:#fff">${item.val}</div>
-    </div>`).join('');
+  if (condItems.length) {
+    parts.push(`
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        ${condItems.map(it => `
+          <div style="padding:9px 12px;background:var(--surface-3);border:1px solid var(--border);border-radius:10px">
+            <div style="font-size:10px;color:var(--text-dim);margin-bottom:3px">${it.icon} ${it.lbl}</div>
+            <div style="font-size:11px;font-weight:600;color:#fff;line-height:1.5">${it.val}</div>
+          </div>`).join('')}
+      </div>`);
+  }
 
-  // 키워드
-  const kws = (a.keywords || []);
-  document.getElementById('ebg-detail-keywords').innerHTML = kws.length
-    ? kws.map(k => `<span style="display:inline-block;padding:4px 10px;margin:3px;border-radius:9999px;
-        font-size:11px;font-weight:600;background:rgba(83,213,242,.1);color:#53d5f2;
-        border:1px solid rgba(83,213,242,.2)"># ${k}</span>`).join('')
-    : '<span style="color:var(--text-dim);font-size:12px">—</span>';
+  // 함께 있어야 할 브랜드
+  const neighbors = sc.neighborBrands || [];
+  if (neighbors.length) {
+    parts.push(`
+      <div style="margin-bottom:12px">
+        <div style="font-size:9px;font-weight:800;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px">선호 인근 브랜드</div>
+        <div>${neighbors.map(b => `<span style="display:inline-block;padding:4px 10px;margin:3px;border-radius:9999px;
+          font-size:11px;background:rgba(255,255,255,.05);color:var(--text-sec);
+          border:1px solid rgba(255,255,255,.09)">${b}</span>`).join('')}</div>
+      </div>`);
+  }
 
   // 우려사항
-  const concernsWrap = document.getElementById('ebg-detail-concerns-wrap');
   if (a.concerns) {
-    concernsWrap.style.display = 'block';
-    document.getElementById('ebg-detail-concerns').textContent = a.concerns;
-  } else {
-    concernsWrap.style.display = 'none';
+    parts.push(`
+      <div style="padding:10px 13px;background:rgba(255,160,50,.06);border:1px solid rgba(255,160,50,.2);
+        border-radius:10px;margin-bottom:12px">
+        <div style="font-size:9px;font-weight:800;color:#FFA032;letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px">⚠ 브랜드 측 우려사항</div>
+        <div style="font-size:12px;color:var(--text-sec);line-height:1.65">${a.concerns}</div>
+      </div>`);
   }
 
-  // 점포 유형 → 매칭 점포 추천 (STORES 기반 간단 매칭)
-  const fitEl = document.getElementById('ebg-detail-fit');
-  if (a.storeType && typeof STORES !== 'undefined') {
-    const isPremium = /강남|프리미엄|고급/.test(a.storeType);
-    const isLarge = /복합몰|대형|아울렛/.test(a.storeType);
-    const matched = Object.entries(STORES)
-      .filter(([name, info]) => {
-        if (isPremium) return info.avg >= 80;
-        if (isLarge)   return info.avg >= 60;
-        return true;
-      })
-      .sort((a, b) => b[1].avg - a[1].avg)
-      .slice(0, 4);
+  // ── 추천 점포 매칭 (preferredAreas + storeConditions 기반) ──
+  if (typeof STORES !== 'undefined') {
+    const preferredAreas = a.preferredAreas || [];
+    const locText = (sc.location || '') + preferredAreas.join(' ');
+    const isPremium = /강남|프리미엄|고급|핵심/.test(locText);
+    const isLarge   = /복합몰|대형|아울렛|몰/.test(locText);
 
-    fitEl.innerHTML = matched.length ? matched.map(([name, info]) => `
-      <div class="ebg-fit-card">
-        <div class="ebg-fit-score">${info.avg}</div>
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:600;color:#fff">${name}</div>
-          <div style="font-size:11px;color:var(--text-sec);margin-top:2px">상권 지수 ${info.avg}점</div>
-        </div>
-      </div>`).join('')
-    : '<div style="color:var(--text-dim);font-size:13px">매칭 점포 없음</div>';
-  } else {
-    fitEl.innerHTML = '<div style="color:var(--text-dim);font-size:13px">점포 유형 정보 없음</div>';
+    let matched = Object.entries(STORES).filter(([name]) => {
+      if (!preferredAreas.length) return true;
+      return preferredAreas.some(area => name.includes(area) ||
+        (STORE_AREA_INFO[name] && (STORE_AREA_INFO[name].district || '').includes(area)));
+    });
+
+    if (!matched.length || matched.length > 10) {
+      matched = Object.entries(STORES)
+        .filter(([, info]) => isPremium ? info.avg >= 80 : isLarge ? info.avg >= 60 : info.avg >= 50);
+    }
+
+    matched = matched.sort((a, b) => b[1].avg - a[1].avg).slice(0, 5);
+
+    if (matched.length) {
+      parts.push(`
+        <div style="font-size:9px;font-weight:800;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">추천 입점 점포</div>
+        ${matched.map(([name, info]) => {
+          const areaInfo = (typeof STORE_AREA_INFO !== 'undefined' && STORE_AREA_INFO[name]) || {};
+          return `
+          <div class="ebg-fit-card">
+            <div class="ebg-fit-score">${info.avg}</div>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:600;color:#fff">${name}</div>
+              <div style="font-size:11px;color:var(--text-sec);margin-top:1px">${areaInfo.district || ''} &nbsp;상권지수 ${info.avg}점</div>
+            </div>
+          </div>`;
+        }).join('')}`);
+    }
   }
+
+  wrap.innerHTML = parts.join('');
 }
 
 function closeEbgDetail() {

@@ -6295,9 +6295,11 @@ function onPptBrandChange() {
   sel.innerHTML = '<option value="">-- EBG 분석 없음 --</option>' +
     entries.map(e => `<option value="${e.id}">[${e.date}] ${e.md || e.brand}</option>`).join('');
   if (entries.length) {
-    sel.value = entries[entries.length-1].id;
-    PPT_DATA.ebgId = entries[entries.length-1].id;
-    PPT_DATA.ebgAnalysis = entries[entries.length-1].analysis;
+    const latest = entries[entries.length-1];
+    sel.value = latest.id;
+    PPT_DATA.ebgId = latest.id;
+    PPT_DATA.ebgAnalysis = latest.analysis;
+    autoFillPptStoresFromEbg(latest);
   } else {
     PPT_DATA.ebgId = null; PPT_DATA.ebgAnalysis = null;
   }
@@ -6309,6 +6311,61 @@ function onPptEbgChange() {
   PPT_DATA.ebgId = id;
   const entry = (typeof EBG_ENTRIES !== 'undefined' ? EBG_ENTRIES : []).find(e => e.id === id);
   PPT_DATA.ebgAnalysis = entry?.analysis || null;
+  if (entry?.analysis) autoFillPptStoresFromEbg(entry);
+}
+
+function autoFillPptStoresFromEbg(entry) {
+  if (typeof STORES === 'undefined') return;
+  const a = entry.analysis || {};
+  const sc = a.storeConditions || {};
+  const preferredAreas = a.preferredAreas || [];
+  const locText = (sc.location || '') + preferredAreas.join(' ');
+  const isPremium = /강남|프리미엄|고급|핵심/.test(locText);
+  const isLarge   = /복합몰|대형|아울렛|몰/.test(locText);
+
+  // 다이소 강제 추천 (시연용)
+  const brandKey = ((a.brandName || '') + ' ' + (entry.brand || '')).replace(/\s/g,'').toLowerCase();
+  const isDaiso = brandKey.includes('다이소') || brandKey.includes('daiso');
+
+  let pickedNames;
+  if (isDaiso) {
+    pickedNames = ['NC청주점','NC중앙로역점','NC강서점','동아강북점','2001중계점'].filter(n => STORES[n]);
+  } else {
+    let matched = Object.entries(STORES).filter(([name]) => {
+      if (!preferredAreas.length) return true;
+      return preferredAreas.some(area => name.includes(area) ||
+        (STORE_AREA_INFO[name] && (STORE_AREA_INFO[name].district || '').includes(area)));
+    });
+    if (!matched.length || matched.length > 10) {
+      matched = Object.entries(STORES)
+        .filter(([, info]) => isPremium ? info.avg >= 80 : isLarge ? info.avg >= 60 : info.avg >= 50);
+    }
+    matched = matched.sort((x, y) => y[1].avg - x[1].avg).slice(0, 5);
+    pickedNames = matched.map(([n]) => n);
+  }
+
+  if (!pickedNames.length) return;
+
+  // 기존 점포 초기화 후 EBG 추천 점포로 교체
+  PPT_DATA.stores = pickedNames.map(name => ({
+    name,
+    storeData: STORES[name] || null,
+    areaInfo: (typeof STORE_AREA_INFO !== 'undefined' ? STORE_AREA_INFO[name] : null) || null
+  }));
+  PPT_DATA.store = PPT_DATA.stores[0].name;
+  PPT_DATA.storeData = PPT_DATA.stores[0].storeData;
+  PPT_DATA.areaInfo = PPT_DATA.stores[0].areaInfo;
+  renderStoreChips();
+  if (typeof renderFloorList === 'function') renderFloorList();
+
+  // 사용자에게 자동 채워졌음을 알림
+  const statusEl = document.getElementById('ppt-gen-status');
+  if (statusEl) {
+    statusEl.style.display = 'block';
+    statusEl.style.color = 'var(--green)';
+    statusEl.innerHTML = `✓ EBG 분석 기반 점포 ${pickedNames.length}개 자동 선택됨: <b>${pickedNames.join(', ')}</b>`;
+    setTimeout(()=>{ statusEl.style.color='var(--text-sec)'; statusEl.style.display='none'; }, 5000);
+  }
 }
 
 function onDartDrop(e) {

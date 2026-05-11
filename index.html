@@ -2330,7 +2330,13 @@ async function runBrandToStore(){
     const names=Object.keys(STORES);
     const results=await Promise.allSettled(names.map(async name=>{
       const sd=STORES[name];
-      try{const d=await kakaoAPIBrand(brand,sd.lat,sd.lng,rad);const cnt=d.documents?.length||0;return{name,cnt,score:sCmp(cnt).s};}
+      try{
+        const d=await kakaoAPIBrand(brand,sd.lat,sd.lng,rad);
+        const cnt=d.documents?.length||0;
+        const cmp=sCmp(cnt);
+        const areaInfo=(typeof STORE_AREA_INFO!=='undefined'&&STORE_AREA_INFO[name])||{};
+        return{name,cnt,score:cmp.s,cmpDesc:cmp.d,storeAvg:sd.avg,areaInfo};
+      }
       catch(_){return{name,cnt:-1,score:0,fail:true};}
     }));
     const all=results.filter(r=>r.status==='fulfilled'&&!r.value.fail).map(r=>r.value);
@@ -2389,15 +2395,42 @@ async function runBrandToStore(){
         </div>`;
     }
 
-    document.getElementById('t1-list').innerHTML = ebgBanner + ranked.map((r,i)=>`
-      <div class="rank-item" ${r.ebgBoost ? 'style="border-color:rgba(30,215,96,.3);background:rgba(30,215,96,.03)"' : ''}>
-        <div class="rn ${i<3?'gold':''}">${i+1}</div>
-        <div style="flex:1"><div class="r-store">${r.name}${r.ebgBoost ? ' <span style="font-size:10px;font-weight:700;color:var(--green);background:rgba(30,215,96,.12);padding:1px 7px;border-radius:9999px;border:1px solid rgba(30,215,96,.25)">EBG ↑</span>' : ''}</div>
-          <div class="r-detail">${r.cnt===0?'반경 내 동일 브랜드 없음':'동일 브랜드 '+r.cnt+'곳 발견'}</div></div>
-        <div style="text-align:right">
-          <div class="r-score">${r.score}<span style="font-size:12px;color:var(--sec)">/40</span></div>
-          <span class="tag ${r.score>=32?'tg':r.score>=20?'tw':'td'}" style="font-size:10px">${r.score>=32?'추천':r.score>=20?'보통':'비추천'}</span>
-        </div></div>`).join('')
+    document.getElementById('t1-list').innerHTML = ebgBanner + ranked.map((r,i)=>{
+      const areaInfo = r.areaInfo || {};
+      const baseScore = r.ebgBoost ? r.score - 6 : r.score;
+      const reasons = [
+        { label:'경쟁 분석', desc: r.cmpDesc || `동일 브랜드 ${r.cnt}곳`, score: baseScore, max:40, color: baseScore>=32?'var(--green)':baseScore>=20?'#F97316':'#EF4444' },
+        areaInfo.incomeGrade ? { label:'소득 등급', desc: `${areaInfo.incomeGrade} (${areaInfo.incomeLbl||''})`, score: null, color:'#53d5f2' } : null,
+        r.storeAvg ? { label:'상권 지수', desc: `${r.storeAvg}점 / 100`, score: null, color:'#C0A882' } : null,
+        r.ebgBoost ? { label:'EBG 선호지역', desc: '키맨 EBG 선호 상권 매칭 +6점', score: 6, max:6, color:'var(--green)' } : null,
+      ].filter(Boolean);
+
+      return `
+      <div class="rank-item" style="${r.ebgBoost?'border-color:rgba(30,215,96,.3);background:rgba(30,215,96,.03)':''}">
+        <div style="display:flex;align-items:flex-start;gap:12px;width:100%">
+          <div class="rn ${i<3?'gold':''}" style="flex-shrink:0;margin-top:2px">${i+1}</div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+              <div class="r-store" style="margin:0">${r.name}</div>
+              ${r.ebgBoost?'<span style="font-size:10px;font-weight:700;color:var(--green);background:rgba(30,215,96,.12);padding:1px 7px;border-radius:9999px;border:1px solid rgba(30,215,96,.25)">EBG ↑</span>':''}
+              <div style="margin-left:auto;text-align:right;flex-shrink:0">
+                <div class="r-score" style="margin:0">${r.score}<span style="font-size:12px;color:var(--sec)">/40</span></div>
+                <span class="tag ${r.score>=32?'tg':r.score>=20?'tw':'td'}" style="font-size:10px">${r.score>=32?'추천':r.score>=20?'보통':'비추천'}</span>
+              </div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              ${reasons.map(re=>`
+                <div style="display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:8px;
+                  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)">
+                  <span style="font-size:10px;color:var(--text-dim);font-weight:700;white-space:nowrap">${re.label}</span>
+                  <span style="font-size:10px;color:var(--text-sec)">${re.desc}</span>
+                  ${re.score!==null?`<span style="font-size:10px;font-weight:800;color:${re.color}">${re.score>0?'+':''}${re.score}점</span>`:''}
+                </div>`).join('')}
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }).join('')
     +(alreadyIn.length?`<div style="margin-top:16px;padding:12px 14px;background:rgba(255,255,255,.03);border-radius:var(--r);border:1px solid rgba(255,255,255,.06)">
         <div style="font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">이미 입점된 점포 (추천 제외)</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">${alreadyIn.map(r=>`<span style="padding:3px 10px;border-radius:9999px;font-size:11px;background:rgba(255,255,255,.05);color:var(--text-dim);border:1px solid rgba(255,255,255,.08)">${r.name}</span>`).join('')}</div>

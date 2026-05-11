@@ -5752,9 +5752,21 @@ function selectEbg(id) {
   const analysisWrap = document.getElementById('ebg-analysis-wrap');
   const loadingEl = document.getElementById('ebg-analysis-loading');
 
+  // 재분석 버튼 항상 표시
+  let reanalyzBtn = document.getElementById('ebg-reanalyze-btn');
+  if (!reanalyzBtn) {
+    reanalyzBtn = document.createElement('button');
+    reanalyzBtn.id = 'ebg-reanalyze-btn';
+    reanalyzBtn.style.cssText = 'width:100%;padding:9px;margin-top:10px;background:rgba(83,213,242,.08);border:1px solid rgba(83,213,242,.25);border-radius:8px;color:#53d5f2;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px';
+    analysisWrap.parentNode.insertBefore(reanalyzBtn, analysisWrap.nextSibling);
+  }
+  reanalyzBtn.innerHTML = '↺ 재분석';
+  reanalyzBtn.onclick = () => reanalyzeEbg(entry.id);
+
   if (entry.analysis) {
     loadingEl.style.display = 'none';
     analysisWrap.style.display = 'block';
+    reanalyzBtn.style.display = '';
     renderEbgAnalysis(entry.analysis, entry);
   } else {
     analysisWrap.style.display = 'none';

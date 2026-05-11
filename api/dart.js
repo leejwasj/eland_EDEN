@@ -8,7 +8,7 @@ export default async function handler(req, res) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return res.status(503).json({ error: 'GEMINI_API_KEY 없음' });
 
-  const { image, brand } = req.body || {};
+  const { image, extraPages = [], brand } = req.body || {};
   if (!image) return res.status(400).json({ error: 'image 필드 필요' });
 
   const match = image.match(/^data:([\w\/+]+);base64,(.+)$/);
@@ -50,6 +50,7 @@ export default async function handler(req, res) {
         contents: [{
           parts: [
             { inline_data: { mime_type: mimeType, data: base64Data } },
+            ...extraPages.map(p => ({ inline_data: { mime_type: p.mimeType, data: p.data } })),
             { text: prompt }
           ]
         }],

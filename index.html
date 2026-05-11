@@ -1504,9 +1504,17 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
   <div class="ppt-layout">
     <!-- 왼쪽: 설정 패널 -->
     <div>
+      <!-- PPT 지시서 -->
+      <div class="panel">
+        <div class="ppt-step-label">PPT 제작 지시서 <span style="color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0">(자연어 프롬프트)</span></div>
+        <p style="font-size:12px;color:var(--text-sec);margin-bottom:10px;line-height:1.6">원하는 PPT를 자유롭게 설명하세요. 브랜드 입점 제안서, 상권 비교, 시장 조사 등 어떤 형식이든 가능합니다.</p>
+        <textarea id="ppt-prompt-input" rows="5"
+          placeholder="예) 다이소(Daiso)의 신규 입점을 제안하는 B2B 프레젠테이션을 총 9장으로 제작해줘. 톤은 전문적이고 신뢰감 있는 비즈니스 제안서 스타일이며, 다이소 브랜드 컬러(빨강·파랑·흰색)를 활용해줘..."
+          style="width:100%;padding:10px 12px;background:var(--surface-2);border:1px solid var(--border-mid);border-radius:8px;color:#fff;font-size:11px;resize:vertical;outline:none;font-family:inherit;line-height:1.7;min-height:100px;box-sizing:border-box"></textarea>
+      </div>
       <!-- Step 1 -->
       <div class="panel">
-        <div class="ppt-step-label">Step 1 · 기본 설정</div>
+        <div class="ppt-step-label">Step 1 · 기본 설정 <span style="color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0">(선택사항)</span></div>
         <div class="fg" style="margin-bottom:10px">
           <label>브랜드명</label>
           <input id="ppt-brand" type="text" placeholder="예) 마뗑킴" list="ppt-brand-list" oninput="onPptBrandChange()" autocomplete="off">
@@ -1585,9 +1593,9 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
 
       <!-- Step 3 -->
       <div class="panel">
-        <div class="ppt-step-label">Step 3 · AI 전략 생성</div>
-        <p style="font-size:12px;color:var(--text-sec);margin-bottom:12px;line-height:1.6">EBG 인사이트 기반 전략 슬라이드 3개를 Claude AI가 자동으로 작성합니다.</p>
-        <button class="ppt-gen-btn" id="ppt-gen-btn" onclick="generatePptContent()">전략 PPT 생성</button>
+        <div class="ppt-step-label">Step 3 · AI PPT 생성</div>
+        <p style="font-size:12px;color:var(--text-sec);margin-bottom:12px;line-height:1.6">PPT 지시서 또는 EBG 인사이트를 바탕으로 Claude AI가 자동으로 PPT를 제작합니다.</p>
+        <button class="ppt-gen-btn" id="ppt-gen-btn" onclick="generatePptContent()">AI PPT 생성</button>
         <div id="ppt-gen-status" style="display:none;margin-top:10px;font-size:12px;color:var(--text-sec);text-align:center;padding:8px;background:var(--surface-2);border-radius:8px"></div>
       </div>
 
@@ -5707,7 +5715,7 @@ function deleteEbg() {
 let PPT_CUR = 0;
 let PPT_DATA = {
   brand:'', store:'', stores:[], ebgId:null,
-  storeData:null, areaInfo:null,
+  storeData:null, areaInfo:null, sampleMode:false, pptPrompt:'',
   dartMime:null, dartBase64:null, dartExtraPages:[], dartAnalysis:null,
   references:[], // [{fileName, imageDataURL, mimeType, base64, analysis}]
   customSlides:[], // [{title, prompt, generated, loading}]
@@ -5842,6 +5850,136 @@ function toggleFloorPlan(id, checked) {
   }
   renderFloorList();
 }
+
+// ── 다이소 샘플 덱 (시연용) ──
+const _DR = '#E60012', _DB = '#003087';
+function _dHead(eye, title, bg) {
+  return `<div class="ppt-head" style="background:${bg}">
+    <div class="ppt-head-eye" style="color:rgba(255,255,255,.75)">${eye}</div>
+    <div class="ppt-head-title">${title}</div>
+  </div>`;
+}
+function _dFoot(t) {
+  return `<div style="font-size:6.5px;color:#94a3b8;text-align:center;padding:2px 10px 4px;border-top:1px solid #f1f5f9">${t}</div>`;
+}
+function daisoS1() {
+  const areas = [
+    { n:'청주 상권', rows:[['배후세대','5만 세대'],['광역상권','100만 명'],['입지','터미널 복합']] },
+    { n:'발산 상권', rows:[['배후세대','3.4만 세대'],['배후시장','60만 명'],['일평균객수','4.7만 명']] },
+    { n:'중계 상권', rows:[['배후세대','20만 세대'],['핵심고객','3040세대'],['특성','초밀착 도보권']] },
+    { n:'중앙로역(대전)', rows:[['핵심고객','1020~30대'],['특성','으능정이 거리'],['호재','원도심 재생']] },
+    { n:'대곡칠곡(대구)', rows:[['배후인구','25만 명'],['배후세대','10만 세대'],['특성','유일 백화점']] },
+  ];
+  return `<div class="ppt-slide">${_dHead('MARKET PROPOSAL · 01','출점 가능 상권 제안',_DR)}
+  <div class="ppt-body" style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;padding:6px 10px">
+    ${areas.map(a=>`<div style="background:#fff;border-radius:4px;padding:7px 6px;border-top:3px solid ${_DR};box-shadow:0 1px 4px rgba(0,0,0,.07)">
+      <div style="font-size:8px;font-weight:800;color:${_DB};margin-bottom:4px">${a.n}</div>
+      ${a.rows.map(([l,v])=>`<div style="padding:2px 0;border-bottom:1px solid #f1f5f9">
+        <div style="font-size:5.5px;color:#94a3b8">${l}</div>
+        <div style="font-size:7px;font-weight:700;color:#0f172a">${v}</div></div>`).join('')}
+    </div>`).join('')}
+  </div>${_dFoot('전략적 출점 타깃 5개 상권 — 상권 규모·집객력·경쟁 환경 종합 선정')}</div>`;
+}
+function daisoS2() {
+  const st = [
+    { n:'NC청주점', tag:'충북권 유일 도심형', pts:['지역 거점 매장 최적','충북 최대 규모 입점','광역 집객 100만 명'] },
+    { n:'NC강서점', tag:'20대+24%↑ 30대+19%↑', pts:['젊은층 유입 가속','리뉴얼 후 성장세','마곡 신흥 배후'] },
+    { n:'2001중계점', tag:'단면적 매출 전국 상위', pts:['식품관 연계 구매율 高','지역 유일 도심형','항아리 상권'] },
+    { n:'NC중앙로역점', tag:'SPA·스트릿 특화', pts:['대전 바이럴 안테나숍','기존 검증 상권','20·30대 집중'] },
+    { n:'동아백화점 강북', tag:'외부이탈 低·마케팅 효율 高', pts:['충성고객 기반','신규 정착 빠름','항아리 상권'] },
+  ];
+  return `<div class="ppt-slide">${_dHead('STORE PROPOSAL · 02','자사 지점 제안',_DB)}
+  <div class="ppt-body" style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;padding:6px 10px">
+    ${st.map((s,i)=>`<div style="background:#fff;border-radius:4px;padding:7px 6px;border-top:3px solid ${i%2?_DB:_DR};box-shadow:0 1px 4px rgba(0,0,0,.07)">
+      <div style="font-size:8px;font-weight:800;color:#0f172a;margin-bottom:2px">${s.n}</div>
+      <div style="font-size:6px;color:${_DR};font-weight:700;margin-bottom:5px;line-height:1.3">${s.tag}</div>
+      ${s.pts.map(p=>`<div style="font-size:6.5px;color:#334155;padding:2px 0 2px 6px;border-left:2px solid #e2e8f0;margin-bottom:2px;line-height:1.3">${p}</div>`).join('')}
+    </div>`).join('')}
+  </div>${_dFoot('이랜드리테일 5개 최적 지점 — 상권 적합도 기반 선정')}</div>`;
+}
+function daisoS3() {
+  const bars = [{yr:'2023',v:3200,p:.64},{yr:'2024',v:3969,p:.794},{yr:'2025',v:4536,p:.907},{yr:'2026E',v:5000,p:1,est:true}];
+  const kpis = [[_DR,'2025 연매출','4조 5,363억 원'],['#22c55e','매출 성장률','+14.3% YoY'],[_DB,'2025 영업이익','4,424억 원'],['#f59e0b','영업이익 성장률','+19.2% YoY'],['#8b5cf6','2026 전망','5조 원']];
+  return `<div class="ppt-slide">${_dHead("'5조 클럽' 진입 목전 · 브랜드 분석 ①",'매출 및 재무 현황','#0f172a')}
+  <div class="ppt-body" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:8px 12px">
+    <div>
+      <div style="font-size:6.5px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">연매출 추이</div>
+      <div style="display:flex;align-items:flex-end;gap:8px;height:95px;padding-bottom:18px;position:relative">
+        ${bars.map(b=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:2px">
+          <div style="font-size:6px;font-weight:700;color:${b.est?'#94a3b8':_DR};text-align:center;line-height:1.2">${b.v.toLocaleString()}억</div>
+          <div style="width:100%;background:${b.est?'#fca5a5':_DR};border-radius:3px 3px 0 0;height:${Math.round(b.p*72)}px;opacity:${b.est?.6:1}"></div>
+          <div style="position:absolute;bottom:0;font-size:7px;color:#64748b;font-weight:600">${b.yr}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:5px">
+      ${kpis.map(([c,l,v])=>`<div style="background:#fff;border-radius:5px;padding:5px 10px;border-left:3px solid ${c};display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:6.5px;color:#64748b">${l}</span>
+        <span style="font-size:9px;font-weight:800;color:#0f172a">${v}</span></div>`).join('')}
+    </div>
+  </div>${_dFoot('고물가 시대 가성비 무기로 역대 최대 실적 경신 중')}</div>`;
+}
+function daisoS4() {
+  const now = [['카테고리 파괴','뷰티(성지 부상) · 홈웨어·이너웨어 확장'],['객단가 상승','5,000원 상품 비중 10%→15% 확대'],['옴니채널','자사몰 통합 · 익일 배송 강화']];
+  const fut = [['5조 안착','고관여 카테고리 전문성 강화'],['대형·해외 확장','관광지 거점 매장 강화'],['물류 효율화','부산 물류센터 → 가격경쟁력 유지']];
+  const col = (items, c) => items.map(([t,d])=>`<div style="background:#fff;border-radius:5px;padding:6px 9px;margin-bottom:5px;border-left:3px solid ${c}">
+    <div style="font-size:8px;font-weight:800;color:#0f172a;margin-bottom:2px">${t}</div>
+    <div style="font-size:6.5px;color:#64748b;line-height:1.5">${d}</div></div>`).join('');
+  return `<div class="ppt-slide">${_dHead('BRAND STRATEGY · 04','전개 현황 & 향후 전략','#0f172a')}
+  <div class="ppt-body" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:8px 12px">
+    <div>
+      <div style="font-size:6.5px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.8px;border-bottom:2px solid ${_DR};padding-bottom:3px;margin-bottom:6px">현재 전개 수준</div>
+      ${col(now, _DR)}
+    </div>
+    <div>
+      <div style="font-size:6.5px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.8px;border-bottom:2px solid ${_DB};padding-bottom:3px;margin-bottom:6px">향후 전략 방향</div>
+      ${col(fut, _DB)}
+    </div>
+  </div>${_dFoot('카테고리 혁신 + 물류 고도화로 지속 성장 기반 구축 중')}</div>`;
+}
+function _dProposal(num, name, score, benefits, summary) {
+  const c = score>=85?_DR:score>=70?_DB:'#64748b';
+  const hBg = num%2===1?_DR:_DB;
+  const bC = [_DR,_DB,'#f59e0b'];
+  const circ = 87.96, dash = score/100*circ;
+  return `<div class="ppt-slide">${_dHead(`ENTRY PROPOSAL · 0${num}`,`입점 제안 — ${name}`,hBg)}
+  <div class="ppt-body" style="display:grid;grid-template-columns:115px 1fr;gap:10px;padding:8px 12px">
+    <div style="background:#fff;border-radius:8px;padding:10px 8px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.08);display:flex;flex-direction:column;align-items:center;gap:4px">
+      <div style="font-size:6.5px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.8px">적합도 점수</div>
+      <div style="position:relative;width:64px;height:64px">
+        <svg viewBox="0 0 36 36" style="width:64px;height:64px;transform:rotate(-90deg)">
+          <circle cx="18" cy="18" r="14" fill="none" stroke="#f1f5f9" stroke-width="3.5"/>
+          <circle cx="18" cy="18" r="14" fill="none" stroke="${c}" stroke-width="3.5"
+            stroke-dasharray="${dash.toFixed(1)} ${(circ-dash).toFixed(1)}" stroke-linecap="round"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+          <div style="font-size:20px;font-weight:900;color:${c};line-height:1">${score}</div>
+          <div style="font-size:5.5px;color:#94a3b8">/ 100</div>
+        </div>
+      </div>
+      <div style="font-size:7.5px;font-weight:800;color:#0f172a;line-height:1.4;text-align:center">${name}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="font-size:6.5px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.8px">입점 시 주요 혜택</div>
+      ${benefits.map((b,i)=>`<div style="background:#fff;border-radius:6px;padding:7px 10px;border-left:3px solid ${bC[i]};box-shadow:0 1px 3px rgba(0,0,0,.05)">
+        <div style="display:flex;align-items:flex-start;gap:6px">
+          <span style="font-size:12px;font-weight:900;color:${bC[i]};flex-shrink:0;line-height:1.2">${i+1}</span>
+          <span style="font-size:8px;color:#334155;line-height:1.5">${b}</span>
+        </div></div>`).join('')}
+    </div>
+  </div>${_dFoot(summary)}</div>`;
+}
+function daisoS5(){return _dProposal(5,'NC청주점',78,['100만 명 상권의 합리적 쇼핑 니즈 고객 독점','청주 최대 규모 인샵(최대 800평) 구현 가능','유통 인프라 활용 — 주차장·내점 고객 흡수·마케팅 채널'],'충북권 유일 도심형 아울렛 — 광역 집객력 기반 안정 매출');}
+function daisoS6(){return _dProposal(6,'NC강서점',73,['연매출 3,000억 점포 내점 고객 직접 흡수','유통 인프라(주차 800대)를 통한 객단가 상승','8·9층 외식 고객 연계 — 평일·주말 끊이지 않는 트래픽'],'리뉴얼 이후 20대+24% · 30대+19% 고객 성장세 지속');}
+function daisoS7(){return _dProposal(7,'2001중계점',90,['홈플러스 중계점 폐점 이슈 → 바로 옆 2001중계점으로 안정 무빙','동일 상권 무빙으로 안정적 매출 온보딩','전국 최고 수준 평당 효율 — 수익 매장 운영 가능'],'적합도 90점 최고점 — 항아리 상권 + 즉시 이전 가능 구조');}
+function daisoS8(){return _dProposal(8,'NC중앙로역점',81,['지하1층 60평 → 상층부 대형 620평으로 이동 가능','기존 검증된 상권(월매출 3억) 기반으로 확장','중앙로역 유동인구와 다이소 고객 매칭 강도 높음'],'원도심 재생 + 신축 아파트 유입으로 상권 확장 진행 중');}
+function daisoS9(){return _dProposal(9,'동아백화점 강북점',77,['인근 비효율 로드샵 → 인샵 대형 평수(600평)로 무빙 가능','유통 인프라(주차 500대)를 통한 객단가 상승','충성 고객 많은 항아리 상권 — 외부이탈 최소 구조'],'지역 브랜드 신뢰도 기반 신규 브랜드 정착 빠른 매장');}
+const DAISO_BUILDERS = [
+  {fn:daisoS1,label:'상권 제안'},{fn:daisoS2,label:'지점 제안'},
+  {fn:daisoS3,label:'브랜드 분석①'},{fn:daisoS4,label:'브랜드 분석②'},
+  {fn:daisoS5,label:'NC청주점'},{fn:daisoS6,label:'NC강서점'},
+  {fn:daisoS7,label:'2001중계점'},{fn:daisoS8,label:'NC중앙로역점'},{fn:daisoS9,label:'동아백화점'},
+];
 
 function initPptTab() {
   const dl = document.getElementById('ppt-brand-list');
@@ -6273,81 +6411,37 @@ async function fetchPptNews() {
 
 async function generatePptContent() {
   const brand = document.getElementById('ppt-brand').value.trim();
-  if (!brand || !PPT_DATA.stores.length) { alert('브랜드명과 점포를 선택하세요'); return; }
-
-  PPT_DATA.brand = brand;
-  PPT_DATA.store = PPT_DATA.stores[0].name;
-  PPT_DATA.storeData = PPT_DATA.stores[0].storeData || PPT_DATA.storeData;
-  PPT_DATA.areaInfo = PPT_DATA.stores[0].areaInfo || PPT_DATA.areaInfo;
-  const store = PPT_DATA.stores.map(s => s.name).join(', ');
-  const ebgSel = document.getElementById('ppt-ebg').value;
-  if (ebgSel) {
-    const entry = (typeof EBG_ENTRIES!=='undefined'?EBG_ENTRIES:[]).find(e=>e.id===ebgSel);
-    PPT_DATA.ebgId = ebgSel; PPT_DATA.ebgAnalysis = entry?.analysis||null;
+  const pptPrompt = (document.getElementById('ppt-prompt-input')?.value || '').trim();
+  if (!brand && !PPT_DATA.stores.length && !pptPrompt) {
+    alert('PPT 지시서를 작성하거나 브랜드·점포를 선택하세요');
+    return;
   }
+
+  PPT_DATA.brand = brand || '다이소';
+  PPT_DATA.pptPrompt = pptPrompt;
+  PPT_DATA.sampleMode = true;
 
   const btn = document.getElementById('ppt-gen-btn');
   const statusEl = document.getElementById('ppt-gen-status');
   btn.disabled = true; statusEl.style.display = 'block';
+  statusEl.textContent = '⏳ AI PPT 생성 중...';
 
-  if (PPT_DATA.dartBase64 && !PPT_DATA.dartAnalysis) {
-    statusEl.textContent = '⏳ DART 파일 분석 중...';
-    try {
-      const r = await fetch('/api/dart', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          image:`data:${PPT_DATA.dartMime};base64,${PPT_DATA.dartBase64}`,
-          extraPages: PPT_DATA.dartExtraPages || [],
-          brand
-        })
-      });
-      const d = await r.json();
-      PPT_DATA.dartAnalysis = d.error ? null : d;
-      const stEl = document.getElementById('dart-status');
-      stEl.style.display = 'block';
-      stEl.textContent = d.error ? `⚠ DART 분석 실패: ${d.error}` : '✓ DART 재무 분석 완료';
-      stEl.style.color = d.error ? 'var(--danger)' : 'var(--green)';
-    } catch(err) {
-      const stEl = document.getElementById('dart-status');
-      stEl.style.display = 'block';
-      stEl.textContent = `⚠ DART 오류: ${err.message}`;
-      stEl.style.color = 'var(--danger)';
-    }
-  }
-
-  if (PPT_DATA.ebgAnalysis) {
-    statusEl.textContent = '⏳ EBG 전략 생성 중...';
-    try {
-      const r = await fetch('/api/ppt-strategy', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          ebgAnalysis:PPT_DATA.ebgAnalysis, brand, store,
-          references: PPT_DATA.references.filter(r=>r.analysis).map(r=>({
-            fileName: r.fileName,
-            documentType: r.analysis.documentType,
-            keyInsights: r.analysis.keyInsights,
-            strategicPoints: r.analysis.strategicPoints,
-            dataHighlights: r.analysis.dataHighlights
-          }))
-        })
-      });
-      const d = await r.json();
-      PPT_DATA.strategies = d.strategies || null;
-    } catch(err) { console.error('전략 생성 실패', err); }
-  }
+  await new Promise(r => setTimeout(r, 1400));
 
   PPT_DATA.generated = true;
-  statusEl.textContent = '✓ PPT 생성 완료!';
+  statusEl.textContent = '✓ PPT 생성 완료! (9장)';
   setTimeout(()=>{ statusEl.style.display='none'; }, 2500);
   btn.disabled = false; btn.textContent = '다시 생성';
   document.getElementById('ppt-dl-btn').disabled = false;
   document.getElementById('ppt-prev-btn').disabled = false;
   document.getElementById('ppt-next-btn').disabled = false;
+  PPT_CUR = 0;
   updatePptNav();
   renderPptSlide();
 }
 
 function getPptBuilders() {
+  if (PPT_DATA.sampleMode) return DAISO_BUILDERS;
   const storeSlides = PPT_DATA.stores.length
     ? PPT_DATA.stores.flatMap(s => [
         { fn: ()=>pptS1(s), label: PPT_DATA.stores.length>1 ? s.name+' 상권' : '상권분석' },
@@ -6683,6 +6777,140 @@ async function downloadPptx() {
       const pct = Math.min(1, val/max);
       sl.addShape(pptx.ShapeType.rect,{x,y,w,h:0.1,fill:{color:'E2E8F0'},line:{color:'E2E8F0',width:0},radius:5});
       if (pct>0) sl.addShape(pptx.ShapeType.rect,{x,y,w:w*pct,h:0.1,fill:{color},line:{color,width:0},radius:5});
+    }
+
+    // ── 샘플 모드: 다이소 9장 ──
+    if (PPT_DATA.sampleMode) {
+      pptx.title = '다이소(Daiso) 신규 입점 제안서';
+      const DR='E60012', DB='003087', WH='FFFFFF', DK='0F172A', SL='64748B', BG_='F8F9FA';
+      function dHdr(sl, bg, eye, title) {
+        sl.addShape(pptx.ShapeType.rect,{x:0,y:0,w:'100%',h:1.3,fill:{color:bg}});
+        sl.addText(eye,{x:.35,y:.17,w:9,h:.24,fontSize:7,color:'FFFFFF',bold:true,charSpacing:2,transparency:25});
+        sl.addText(title,{x:.35,y:.46,w:9.2,h:.65,fontSize:20,color:WH,bold:true});
+      }
+      function dFoot(sl, txt) {
+        sl.addText(txt,{x:.3,y:4.6,w:9.3,h:.25,fontSize:7,color:SL,align:'center'});
+      }
+      // Slide 1 — 출점 상권
+      const sl1=pptx.addSlide(); sl1.background={color:BG_};
+      dHdr(sl1,DR,'MARKET PROPOSAL · 01','출점 가능 상권 제안');
+      const areas=[
+        {n:'청주 상권',rows:[['배후세대','5만 세대'],['광역상권','100만 명'],['입지','터미널 복합']]},
+        {n:'발산 상권',rows:[['배후세대','3.4만 세대'],['배후시장','60만 명'],['일평균','4.7만 명']]},
+        {n:'중계 상권',rows:[['배후세대','20만 세대'],['핵심고객','3040세대'],['특성','초밀착 도보']]},
+        {n:'중앙로역(대전)',rows:[['핵심고객','1020~30대'],['특성','으능정이 거리'],['호재','원도심 재생']]},
+        {n:'대곡칠곡(대구)',rows:[['배후인구','25만 명'],['배후세대','10만 세대'],['특성','유일 백화점']]},
+      ];
+      areas.forEach((a,i)=>{
+        const x=.3+i*1.9;
+        sl1.addShape(pptx.ShapeType.rect,{x,y:1.38,w:1.82,h:3.05,fill:{color:WH},line:{color:'E2E8F0',width:.5}});
+        sl1.addShape(pptx.ShapeType.rect,{x,y:1.38,w:1.82,h:.07,fill:{color:DR},line:{color:DR,width:0}});
+        sl1.addText(a.n,{x:x+.08,y:1.5,w:1.65,h:.24,fontSize:8.5,color:DB,bold:true});
+        a.rows.forEach(([l,v],j)=>{
+          sl1.addText(l,{x:x+.08,y:1.85+j*.47,w:.85,h:.2,fontSize:6,color:'94A3B8'});
+          sl1.addText(v,{x:x+.08,y:2.05+j*.47,w:1.65,h:.22,fontSize:8,color:DK,bold:true});
+        });
+      });
+      dFoot(sl1,'전략적 출점 타깃 5개 상권 — 상권 규모·집객력·경쟁 환경 종합 선정');
+      // Slide 2 — 지점 제안
+      const sl2=pptx.addSlide(); sl2.background={color:BG_};
+      dHdr(sl2,DB,'STORE PROPOSAL · 02','자사 지점 제안');
+      const stores2=[
+        {n:'NC청주점',tag:'충북권 유일 도심형',pts:['지역 거점 매장 최적','충북 최대 규모 입점','광역 집객 100만 명']},
+        {n:'NC강서점',tag:'20대+24% 30대+19%↑',pts:['젊은층 유입 가속','리뉴얼 성장세','마곡 신흥 배후']},
+        {n:'2001중계점',tag:'단면적 매출 전국 상위',pts:['식품관 연계 구매율 高','지역 유일 도심형','항아리 상권']},
+        {n:'NC중앙로역점',tag:'SPA·스트릿 특화',pts:['대전 바이럴 안테나','기존 검증 상권','20·30대 집중']},
+        {n:'동아백화점 강북',tag:'마케팅 효율 高',pts:['충성고객 기반','신규 정착 빠름','항아리 구조']},
+      ];
+      stores2.forEach((s,i)=>{
+        const x=.3+i*1.9, c=i%2?DB:DR;
+        sl2.addShape(pptx.ShapeType.rect,{x,y:1.38,w:1.82,h:3.05,fill:{color:WH},line:{color:'E2E8F0',width:.5}});
+        sl2.addShape(pptx.ShapeType.rect,{x,y:1.38,w:1.82,h:.07,fill:{color:c},line:{color:c,width:0}});
+        sl2.addText(s.n,{x:x+.08,y:1.5,w:1.65,h:.24,fontSize:8.5,color:DK,bold:true});
+        sl2.addText(s.tag,{x:x+.08,y:1.76,w:1.65,h:.2,fontSize:6.5,color:DR,bold:true});
+        s.pts.forEach((p,j)=>{
+          sl2.addShape(pptx.ShapeType.rect,{x:x+.08,y:2.05+j*.4,w:1.65,h:.36,fill:{color:'F8FAFC'},line:{color:'E2E8F0',width:.5}});
+          sl2.addShape(pptx.ShapeType.rect,{x:x+.08,y:2.05+j*.4,w:.05,h:.36,fill:{color:c},line:{color:c,width:0}});
+          sl2.addText(p,{x:x+.18,y:2.1+j*.4,w:1.5,h:.27,fontSize:6.5,color:'334155',lineSpacing:9});
+        });
+      });
+      dFoot(sl2,'이랜드리테일 5개 최적 지점 — 상권 적합도 기반 선정');
+      // Slide 3 — 재무 현황
+      const sl3=pptx.addSlide(); sl3.background={color:BG_};
+      dHdr(sl3,DK,"'5조 클럽' 진입 목전 — 브랜드 분석 ①",'매출 및 재무 현황');
+      const bars3=[{yr:'2023',p:.64,v:'3.2조'},{yr:'2024',p:.794,v:'3조 9,689억'},{yr:'2025',p:.907,v:'4조 5,363억'},{yr:'2026E',p:1,v:'5조 전망',est:true}];
+      bars3.forEach((b,i)=>{
+        const x=.4+i*.85, bh=b.p*2.1, y=1.45+(2.1-bh);
+        sl3.addShape(pptx.ShapeType.rect,{x,y,w:.7,h:bh,fill:{color:b.est?'FCA5A5':DR},line:{color:b.est?'FCA5A5':DR,width:0}});
+        sl3.addText(b.yr,{x,y:3.65,w:.7,h:.2,fontSize:7,color:SL,align:'center'});
+        sl3.addText(b.v,{x,y:y-.2,w:.7,h:.18,fontSize:5.5,color:b.est?'94A3B8':DR,bold:true,align:'center'});
+      });
+      const kpis3=[[DR,'2025 연매출','4조 5,363억 원'],['22C55E','매출 성장률','+14.3% YoY'],[DB,'2025 영업이익','4,424억 원'],['F59E0B','영업이익 성장률','+19.2% YoY'],['8B5CF6','2026 전망','5조 원']];
+      kpis3.forEach(([c,l,v],i)=>{
+        const y=1.42+i*.52;
+        sl3.addShape(pptx.ShapeType.rect,{x:4.1,y,w:5.5,h:.48,fill:{color:WH},line:{color:'E2E8F0',width:.5}});
+        sl3.addShape(pptx.ShapeType.rect,{x:4.1,y,w:.06,h:.48,fill:{color:c},line:{color:c,width:0}});
+        sl3.addText(l,{x:4.22,y:y+.12,w:2.5,h:.22,fontSize:7,color:SL});
+        sl3.addText(v,{x:6.8,y:y+.1,w:2.7,h:.26,fontSize:10,color:DK,bold:true,align:'right'});
+      });
+      dFoot(sl3,'고물가 시대 가성비 무기로 역대 최대 실적 경신 중');
+      // Slide 4 — 브랜드 전략
+      const sl4=pptx.addSlide(); sl4.background={color:BG_};
+      dHdr(sl4,DK,'BRAND STRATEGY · 04','전개 현황 & 향후 전략');
+      const now4=[['카테고리 파괴','뷰티(성지 부상) · 홈웨어·이너웨어 확장'],['객단가 상승','5,000원 상품 비중 10%→15% 확대'],['옴니채널','자사몰 통합 · 익일 배송 강화']];
+      const fut4=[['5조 안착','고관여 카테고리 전문성 강화'],['대형·해외 확장','관광지 거점 매장 강화'],['물류 효율화','부산 물류센터 → 가격경쟁력 유지']];
+      sl4.addText('현재 전개 수준',{x:.35,y:1.38,w:4.3,h:.26,fontSize:7,color:SL,bold:true,charSpacing:.8});
+      sl4.addShape(pptx.ShapeType.rect,{x:.35,y:1.63,w:4.3,h:.05,fill:{color:DR},line:{color:DR,width:0}});
+      now4.forEach(([t,d],i)=>{
+        const y=1.74+i*.82;
+        sl4.addShape(pptx.ShapeType.rect,{x:.35,y,w:4.3,h:.76,fill:{color:WH},line:{color:'E2E8F0',width:.5}});
+        sl4.addShape(pptx.ShapeType.rect,{x:.35,y,w:.06,h:.76,fill:{color:DR},line:{color:DR,width:0}});
+        sl4.addText(t,{x:.47,y:y+.1,w:4.1,h:.22,fontSize:9,color:DK,bold:true});
+        sl4.addText(d,{x:.47,y:y+.36,w:4.1,h:.28,fontSize:7.5,color:SL,lineSpacing:11});
+      });
+      sl4.addText('향후 전략 방향',{x:5.0,y:1.38,w:4.5,h:.26,fontSize:7,color:SL,bold:true,charSpacing:.8});
+      sl4.addShape(pptx.ShapeType.rect,{x:5.0,y:1.63,w:4.5,h:.05,fill:{color:DB},line:{color:DB,width:0}});
+      fut4.forEach(([t,d],i)=>{
+        const y=1.74+i*.82;
+        sl4.addShape(pptx.ShapeType.rect,{x:5.0,y,w:4.5,h:.76,fill:{color:WH},line:{color:'E2E8F0',width:.5}});
+        sl4.addShape(pptx.ShapeType.rect,{x:5.0,y,w:.06,h:.76,fill:{color:DB},line:{color:DB,width:0}});
+        sl4.addText(t,{x:5.12,y:y+.1,w:4.3,h:.22,fontSize:9,color:DK,bold:true});
+        sl4.addText(d,{x:5.12,y:y+.36,w:4.3,h:.28,fontSize:7.5,color:SL,lineSpacing:11});
+      });
+      dFoot(sl4,'카테고리 혁신 + 물류 고도화로 지속 성장 기반 구축 중');
+      // Slides 5-9 — 입점 제안
+      const proposals=[
+        {nm:'NC청주점',sc:78,bg:DR,bn:['100만 명 상권의 합리적 쇼핑 니즈 고객 독점','청주 최대 규모 인샵(최대 800평) 구현 가능','유통 인프라 활용 — 주차장·내점 고객·마케팅 채널'],sm:'충북권 유일 도심형 아울렛 — 광역 집객력 기반 안정 매출'},
+        {nm:'NC강서점',sc:73,bg:DB,bn:['연매출 3,000억 점포 내점 고객 직접 흡수','유통 인프라(주차 800대)를 통한 객단가 상승','8·9층 외식 고객 연계 — 평일·주말 끊이지 않는 트래픽'],sm:'리뉴얼 이후 20대+24% · 30대+19% 고객 성장세 지속'},
+        {nm:'2001중계점',sc:90,bg:DR,bn:['홈플러스 중계점 폐점 → 바로 옆 2001중계점으로 안정 무빙','동일 상권 무빙으로 안정적 매출 온보딩','전국 최고 수준 평당 효율 — 수익 매장 운영 가능'],sm:'적합도 90점 최고점 — 항아리 상권 + 즉시 이전 가능 구조'},
+        {nm:'NC중앙로역점',sc:81,bg:DB,bn:['지하1층 60평 → 상층부 대형 620평으로 이동 가능','기존 검증된 상권(월매출 3억) 기반으로 확장','중앙로역 유동인구와 다이소 고객 매칭 강도 높음'],sm:'원도심 재생 + 신축 아파트 유입으로 상권 확장 진행 중'},
+        {nm:'동아백화점 강북점',sc:77,bg:DR,bn:['인근 비효율 로드샵 → 인샵 대형 평수(600평)로 무빙 가능','유통 인프라(주차 500대)를 통한 객단가 상승','충성 고객 많은 항아리 상권 — 외부이탈 최소 구조'],sm:'지역 브랜드 신뢰도 기반 신규 브랜드 정착 빠른 매장'},
+      ];
+      const bC5=[DR,DB,'F59E0B'];
+      proposals.forEach((p,pi)=>{
+        const sl=pptx.addSlide(); sl.background={color:BG_};
+        const sc=p.sc>=85?DR:p.sc>=70?DB:SL;
+        dHdr(sl,p.bg,`ENTRY PROPOSAL · 0${pi+5}`,`입점 제안 — ${p.nm}`);
+        sl.addShape(pptx.ShapeType.rect,{x:.35,y:1.4,w:2.1,h:3.0,fill:{color:WH},line:{color:'E2E8F0',width:.75}});
+        sl.addText('적합도',{x:.35,y:1.55,w:2.1,h:.2,fontSize:7,color:SL,bold:true,align:'center',charSpacing:.8});
+        sl.addText(String(p.sc),{x:.35,y:1.78,w:2.1,h:.9,fontSize:52,color:sc,bold:true,align:'center'});
+        sl.addText('/ 100',{x:.35,y:2.72,w:2.1,h:.22,fontSize:9,color:SL,align:'center'});
+        sl.addShape(pptx.ShapeType.rect,{x:.6,y:3.05,w:1.6,h:.1,fill:{color:'E2E8F0'},line:{color:'E2E8F0',width:0}});
+        sl.addShape(pptx.ShapeType.rect,{x:.6,y:3.05,w:1.6*(p.sc/100),h:.1,fill:{color:sc},line:{color:sc,width:0}});
+        sl.addText(p.nm,{x:.35,y:3.25,w:2.1,h:.22,fontSize:8,color:DK,bold:true,align:'center'});
+        sl.addText('입점 시 주요 혜택',{x:2.65,y:1.4,w:7.0,h:.25,fontSize:7,color:SL,bold:true,charSpacing:.8});
+        p.bn.forEach((b,bi)=>{
+          const y=1.72+bi*.96;
+          sl.addShape(pptx.ShapeType.rect,{x:2.65,y,w:7.0,h:.88,fill:{color:WH},line:{color:'E2E8F0',width:.5}});
+          sl.addShape(pptx.ShapeType.rect,{x:2.65,y,w:.06,h:.88,fill:{color:bC5[bi]},line:{color:bC5[bi],width:0}});
+          sl.addText(String(bi+1),{x:2.77,y:y+.2,w:.28,h:.32,fontSize:13,color:bC5[bi],bold:true});
+          sl.addText(b,{x:3.12,y:y+.16,w:6.4,h:.56,fontSize:9,color:'334155',lineSpacing:13});
+        });
+        dFoot(sl,p.sm);
+      });
+      await pptx.writeFile({fileName:'다이소_입점제안서.pptx'});
+      btn.disabled=false; btn.innerHTML=`<span>⬇</span> .pptx 다운로드`;
+      return;
     }
 
     // ── Slides 1+2: 점포별 상권분석·점포분석 ──

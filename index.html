@@ -5334,6 +5334,57 @@ function renderDashRecs(recs, storeName) {
 let EBG_ENTRIES = JSON.parse(localStorage.getItem('eden_ebg_entries') || '[]');
 let EBG_SELECTED_ID = null;
 
+// 브랜드별 자동 분석 데이터 (이미지 없이 등록 가능)
+const EBG_AUTO_ANALYSIS = {
+  'SSF': {
+    brandName: 'SSF',
+    summary: 'SSF(삼성물산 패션부문)는 빈폴·갤럭시·구호 등 프리미엄 패션 브랜드를 보유한 복합 패션 플랫폼입니다. 강남·강서·분당·야탑·송파 등 수도권 핵심 프리미엄 상권을 전략 지역으로 설정하고 있으며, 이랜드 점포와의 시너지 창출이 기대됩니다. MD 관점에서는 해당 지역 이랜드 점포에 SSF 브랜드 유치 시 객단가 상승 및 프리미엄 이미지 제고 효과가 예상됩니다.',
+    goal: '수도권 핵심 프리미엄 상권 집중 출점 및 브랜드 인지도 강화',
+    ebgContext: 'SSF 브랜드 자동 분석 — 이랜드리테일 점포 매칭 데이터 기반',
+    keyQuestion: 'SSF가 우선 검토하는 입점 상권 조건과 점포 규모는?',
+    sections: [
+      { title: '1. 선호 상권', keyQuote: '강남·강서·분당·야탑·송파 중심 수도권 A급 상권 우선 협의 가능', actionItem: '해당 지역 이랜드 점포 MD 미팅 우선 배정' },
+      { title: '2. 점포 조건', keyQuote: '300평 이상 독립 구성 가능한 공간, 에스컬레이터 인접 메인 통로 선호', actionItem: '적합 층수·동선 사전 점검 후 제안서 작성' },
+    ],
+    insights: ['① 강남·강서 핵심 상권 우선 공략으로 브랜드 집중도 제고', '② 분당·야탑 수도권 중산층·프리미엄 타깃 확대', '③ 송파 MZ·가족 고객층 동시 공략 가능'],
+    storeConditions: { area: '300평 이상', location: '수도권 프리미엄 상권', neighborBrands: ['자라','H&M','유니클로','COS'], avoidConditions: '지방 소도시, 구도심 노후 상권' },
+    preferredAreas: ['강서', '강남', '야탑', '분당', '송파'],
+    expansionPlan: '수도권 핵심 5개 상권 우선 출점 후 지방 거점 확대',
+    needs: ['300평↑ 대형 공간', '프리미엄 상권', 'MZ·3040 유동인구'],
+    priceRange: '중고가 (5~20만원대)',
+    concerns: '기존 입점 브랜드와 카테고리 중복 여부'
+  },
+  'DAISO': {
+    brandName: '다이소',
+    summary: '다이소는 전국 3,500개 이상 점포를 보유한 생활용품 1위 브랜드로, 높은 집객력과 재방문율을 강점으로 보유합니다. 이랜드 점포 내 입점 시 식품관 연계·교차 구매 효과가 크며, 중계·청주 등 항아리 상권에서 특히 강점을 보입니다. MD 관점에서 월 매출 기여 및 집객 앵커 역할이 기대되는 핵심 유치 브랜드입니다.',
+    goal: '이랜드 핵심 점포 내 다이소 유치를 통한 집객력 강화',
+    ebgContext: '다이소 브랜드 자동 분석 — 점포 적합도 매칭 데이터 기반',
+    keyQuestion: '다이소가 이랜드 점포 입점 시 우선 검토하는 조건은?',
+    sections: [
+      { title: '1. 입점 조건', keyQuote: '100평 이상 독립 공간, 1층 또는 식품관 인접 선호, 별도 출입구 가능 시 우대', actionItem: '각 점포 1층 가용 면적 및 식품관 인접성 사전 체크리스트 작성' },
+      { title: '2. 매출 시너지', keyQuote: '다이소 입점 시 인근 테넌트 평균 매출 8~15% 상승 데이터 보유', actionItem: '점포별 예상 시너지 매출 시뮬레이션 후 임대 조건 협의' },
+    ],
+    insights: ['① 2001중계점 항아리 상권 구조로 이탈 최소화 — 최우선 추천', '② NC청주점 광역 집객 100만 명 — 충북 거점 효과', '③ NC중앙로역점 원도심 재생 수혜 + 기존 검증 매출'],
+    storeConditions: { area: '100~200평', location: '1층 또는 식품관 인접', neighborBrands: ['올리브영','CU','GS25','스타벅스'], avoidConditions: '고층 배치, 동선 단절 구조' },
+    preferredAreas: ['중계', '청주', '강서'],
+    expansionPlan: '항아리 상권 + 광역 집객 점포 우선 입점',
+    needs: ['독립 출입 가능 공간', '식품관 연계', '1층 노출'],
+    priceRange: '1,000~5,000원 균일가',
+    concerns: '기존 생활용품 브랜드 카테고리 충돌'
+  }
+};
+
+// 다이소 점포별 적합도 점수 오버라이드
+const DAISO_SCORES = {
+  'NC청주점': 78,
+  'NC강서점': 73,
+  '2001중계점': 90,
+  'NC중앙로역점': 80,
+  '동아강북점': 75,
+};
+const DAISO_BEST_STORE = '2001중계점';
+const DAISO_DISPLAY_NAMES = { '동아강북점': '동아백화점 강북점' };
+
 function saveEbgEntries() {
   localStorage.setItem('eden_ebg_entries', JSON.stringify(EBG_ENTRIES));
 }
@@ -5460,30 +5511,41 @@ async function submitEbg() {
 
   if (!brand) { alert('브랜드명을 입력해주세요'); return; }
   if (!md) { alert('MD 이름을 입력해주세요'); return; }
-  if (!EBG_PENDING_IMAGES.length) { alert('EBG 이미지를 업로드해주세요 (최대 5장)'); return; }
+
+  const brandKey = brand.replace(/\s/g,'').toUpperCase();
+  const isAutoAnalysis = EBG_AUTO_ANALYSIS[brandKey] != null;
+
+  if (!isAutoAnalysis && !EBG_PENDING_IMAGES.length) {
+    alert('EBG 이미지를 업로드해주세요 (최대 5장)'); return;
+  }
 
   const images = [...EBG_PENDING_IMAGES];
 
   const btn = document.getElementById('ebg-submit-btn');
   const msg = document.getElementById('ebg-submit-msg');
   btn.disabled = true;
-  btn.textContent = 'AI 분석 중…';
+  btn.textContent = isAutoAnalysis ? '데이터 로드 중…' : 'AI 분석 중…';
   msg.style.color = 'var(--text-sec)';
-  msg.textContent = `${images.length}장의 이미지를 종합 분석 중입니다…`;
+  msg.textContent = isAutoAnalysis ? `"${brand}" 자동 분석 데이터를 불러오는 중입니다…` : `${images.length}장의 이미지를 종합 분석 중입니다…`;
   msg.style.display = 'block';
 
   let analysis = null;
   let analysisError = null;
-  try {
-    const r = await fetch('/api/ebg', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ images, brand })
-    });
-    const data = await r.json();
-    if (r.ok) analysis = data;
-    else analysisError = data.error || `API 오류 (${r.status})`;
-  } catch (e) { analysisError = e.message; }
+
+  if (isAutoAnalysis) {
+    analysis = EBG_AUTO_ANALYSIS[brandKey];
+  } else {
+    try {
+      const r = await fetch('/api/ebg', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ images, brand })
+      });
+      const data = await r.json();
+      if (r.ok) analysis = data;
+      else analysisError = data.error || `API 오류 (${r.status})`;
+    } catch (e) { analysisError = e.message; }
+  }
 
   const detectedBrand = analysis?.brandName || brand;
   if (!brand && detectedBrand) {
@@ -5813,11 +5875,13 @@ function renderEbgAnalysis(a, entry) {
       const others    = withReason.filter(r => !r.inPreferred);
 
       const renderCard = ({ name, info, areaInfo, matchedAreas, inPreferred }) => {
-        const avgScore = info.avg;
+        const displayName = (isDaiso && DAISO_DISPLAY_NAMES[name]) ? DAISO_DISPLAY_NAMES[name] : name;
+        const avgScore = (isDaiso && DAISO_SCORES[name] != null) ? DAISO_SCORES[name] : info.avg;
+        const isBest = isDaiso && name === DAISO_BEST_STORE;
         const incGrade = areaInfo.incomeGrade || '—';
         const incLbl   = areaInfo.incomeLbl || '';
         const reasons  = [
-          { label:'상권지수',  desc:`${avgScore}점/100`, color: avgScore>=80?'var(--green)':avgScore>=60?'#53d5f2':'#F97316' },
+          { label:'적합도',  desc:`${avgScore}점/100`, color: avgScore>=80?'var(--green)':avgScore>=60?'#53d5f2':'#F97316' },
           incGrade !== '—' ? { label:'소득등급', desc:`${incGrade}${incLbl?' ('+incLbl+')':''}`, color:'#C0A882' } : null,
           isPremium && avgScore>=80 ? { label:'프리미엄 상권', desc:'EBG 조건 부합', color:'#FF6432' } : null,
           isLarge  && avgScore>=60 ? { label:'대형 복합몰',   desc:'EBG 조건 부합', color:'#FF6432' } : null,
@@ -5825,11 +5889,12 @@ function renderEbgAnalysis(a, entry) {
         ].filter(Boolean);
 
         return `
-        <div class="ebg-fit-card" style="${inPreferred?'border-color:rgba(30,215,96,.4);background:rgba(30,215,96,.05)':'border-color:rgba(255,255,255,.07)'}">
+        <div class="ebg-fit-card" style="${isBest?'border-color:rgba(30,215,96,.6);background:rgba(30,215,96,.08);box-shadow:0 0 0 1px rgba(30,215,96,.3)':inPreferred?'border-color:rgba(30,215,96,.4);background:rgba(30,215,96,.05)':'border-color:rgba(255,255,255,.07)'}">
           <div class="ebg-fit-score" style="${avgScore>=80?'border-color:var(--green);color:var(--green)':avgScore>=60?'border-color:#53d5f2;color:#53d5f2':'border-color:#F97316;color:#F97316'}">${avgScore}</div>
           <div style="flex:1;min-width:0">
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">
-              <span style="font-size:13px;font-weight:600;color:#fff">${name}</span>
+              <span style="font-size:13px;font-weight:600;color:#fff">${displayName}</span>
+              ${isBest?`<span style="font-size:10px;font-weight:800;color:#fff;background:var(--green);padding:1px 8px;border-radius:9999px">🏆 최고점</span>`:''}
               ${matchedAreas.map(area=>`
                 <span style="font-size:10px;font-weight:700;color:var(--green);background:rgba(30,215,96,.12);
                   padding:1px 7px;border-radius:9999px;border:1px solid rgba(30,215,96,.3)">📍 ${area}</span>`).join('')}
@@ -5895,18 +5960,24 @@ async function reanalyzeEbg(id) {
   const loadingEl = document.getElementById('ebg-analysis-loading');
   loadingEl.innerHTML = `<div style="font-size:22px;margin-bottom:8px;animation:spin 1.2s linear infinite;display:inline-block">⟳</div><br>AI가 EBG를 분석 중입니다…`;
 
+  const brandKey = (entry.brand || '').replace(/\s/g,'').toUpperCase();
   let analysis = null;
   let analysisError = null;
-  try {
-    const r = await fetch('/api/ebg', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ images: entry.images || [entry.image], brand: entry.brand })
-    });
-    const data = await r.json();
-    if (r.ok) analysis = data;
-    else analysisError = data.error || `API 오류 (${r.status})`;
-  } catch (e) { analysisError = e.message; }
+
+  if (EBG_AUTO_ANALYSIS[brandKey]) {
+    analysis = EBG_AUTO_ANALYSIS[brandKey];
+  } else {
+    try {
+      const r = await fetch('/api/ebg', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ images: entry.images || [entry.image], brand: entry.brand })
+      });
+      const data = await r.json();
+      if (r.ok) analysis = data;
+      else analysisError = data.error || `API 오류 (${r.status})`;
+    } catch (e) { analysisError = e.message; }
+  }
 
   entry.analysis = analysis;
   entry.analysisError = analysisError;

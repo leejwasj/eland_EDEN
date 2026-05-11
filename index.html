@@ -1152,7 +1152,8 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
     <div class="fgrid">
       <div class="fg" style="grid-column:span 2">
         <label>브랜드명</label>
-        <input type="text" id="t1-brand" placeholder="예: 나이키, 스타벅스, 자라..." oninput="detectCat(1)">
+        <input type="text" id="t1-brand" placeholder="예: 나이키, 스타벅스, 자라..." oninput="detectCat(1)" list="t1-brand-list" autocomplete="off">
+        <datalist id="t1-brand-list"></datalist>
         <div class="hint" id="t1-hint"></div>
       </div>
       <div class="fg"><label>업종 카테고리</label><select id="t1-cat"></select></div>
@@ -1798,6 +1799,37 @@ const BRAND_CAT = {
   '모던하우스':'리빙','오이뮤':'리빙','아로마티카':'리빙','퍼시스':'리빙',
   '에몬스가구':'리빙','시몬스':'리빙','씰리':'리빙','보르네오가구':'리빙',
   '자주생활':'리빙','행남자기':'리빙','WMF':'리빙','르크루제':'리빙',
+  // 편집숍/멀티브랜드
+  'SSF':'편집숍','SSF샵':'편집숍','삼성패션':'편집숍',
+  '한섬':'편집숍','EQL':'편집숍','더한섬닷컴':'편집숍',
+  '무신사':'편집숍','무신사스탠다드':'편집숍','29CM':'편집숍',
+  '에이블리':'편집숍','지그재그':'편집숍','W컨셉':'편집숍',
+  '브랜디':'편집숍','하고스타일':'편집숍','패션플러스':'편집숍',
+  '하이버':'편집숍','네이버쇼핑':'편집숍','카카오스타일':'편집숍',
+  '에스아이빌리지':'편집숍','분더샵':'편집숍','신세계인터내셔날':'편집숍',
+  '트레이더스':'편집숍','홈플러스스타일':'편집숍',
+  // 이랜드 계열 (주요)
+  '에잇세컨즈':'캐주얼','8seconds':'캐주얼',
+  '스파오':'캐주얼','SPAO':'캐주얼',
+  '미쏘':'여성/영여성','MIXXO':'여성/영여성',
+  '로엠':'여성/영여성','ROEM':'여성/영여성',
+  '클로브':'여성/영여성',
+  '뉴발란스':'스포츠','NFL':'스포츠',
+  '팬콧':'캐주얼','PANCOT':'캐주얼',
+  '후아유':'캐주얼','WHO.A.U':'캐주얼',
+  '오즈세컨':'여성/영여성','OZ SECOND':'여성/영여성',
+  '더카트골프':'스포츠','카터스':'아동','OSH KOSH':'아동',
+  // 글로벌 SPA/트렌드
+  '쉐인':'캐주얼','SHEIN':'캐주얼',
+  '젠틀몬스터':'잡화','탬버린즈':'잡화','누데이크':'카페',
+  '다운타우너':'식당','고든램지버거':'패스트푸드',
+  '블루보틀':'카페','센터커피':'카페','모노클':'카페',
+  '프라이탁':'잡화','팝마트':'리빙','DJI':'리빙',
+  '레고':'리빙','LEGO':'리빙','토이저러스':'리빙',
+  '젝시믹스':'스포츠','뮬라웨어':'스포츠','워크아웃':'스포츠',
+  '플렉스':'스포츠','낫도트':'캐주얼','비욘드클로젯':'캐주얼',
+  '솔솔':'캐주얼','스튜디오톰보이':'여성/영여성','키르시':'캐주얼',
+  '카이아크만':'스포츠','올젠':'신사','지이크파렌하이트':'신사',
 };
 
 const CAT_SCAN = [
@@ -3954,6 +3986,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   const inp=document.getElementById('kw-brand');
   if(inp)inp.addEventListener('keydown',e=>{if(e.key==='Enter')runBrandKeyword();});
   renderKwRecent();
+  // 브랜드→점포 탭 datalist — BRAND_CAT 전체
+  const dl=document.getElementById('t1-brand-list');
+  if(dl) dl.innerHTML=Object.keys(BRAND_CAT).sort().map(b=>`<option value="${b}">`).join('');
 });
 
 
@@ -5164,15 +5199,16 @@ function saveEbgEntries() {
 }
 
 function initEbgTab() {
-  // Populate brand datalist from EXCEL_TENANTS
   const dl = document.getElementById('ebg-brand-list');
-  if (dl && EXCEL_TENANTS) {
-    const brands = new Set();
-    Object.values(EXCEL_TENANTS).forEach(floors =>
-      Object.values(floors).forEach(list =>
-        list.forEach(({ brand, isVacant }) => { if (!isVacant && brand) brands.add(brand); })
-      )
-    );
+  if (dl) {
+    const brands = new Set(Object.keys(BRAND_CAT));
+    if (EXCEL_TENANTS) {
+      Object.values(EXCEL_TENANTS).forEach(floors =>
+        Object.values(floors).forEach(list =>
+          list.forEach(({ brand, isVacant }) => { if (!isVacant && brand) brands.add(brand); })
+        )
+      );
+    }
     dl.innerHTML = [...brands].sort().map(b => `<option value="${b}">`).join('');
   }
   // Default date to today
@@ -5770,13 +5806,15 @@ function toggleFloorPlan(id, checked) {
 
 function initPptTab() {
   const dl = document.getElementById('ppt-brand-list');
-  if (dl && typeof EXCEL_TENANTS !== 'undefined') {
-    const brands = new Set();
-    Object.values(EXCEL_TENANTS).forEach(floors =>
-      Object.values(floors).forEach(list =>
-        list.forEach(({brand, isVacant}) => { if (!isVacant && brand) brands.add(brand); })
-      )
-    );
+  if (dl) {
+    const brands = new Set(Object.keys(BRAND_CAT));
+    if (typeof EXCEL_TENANTS !== 'undefined' && EXCEL_TENANTS) {
+      Object.values(EXCEL_TENANTS).forEach(floors =>
+        Object.values(floors).forEach(list =>
+          list.forEach(({brand, isVacant}) => { if (!isVacant && brand) brands.add(brand); })
+        )
+      );
+    }
     dl.innerHTML = [...brands].sort().map(b => `<option value="${b}">`).join('');
   }
   // 점포 select (PPT 탭 + 도면 관리 탭 동시 초기화)

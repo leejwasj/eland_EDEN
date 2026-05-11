@@ -1203,6 +1203,36 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
     <h1 class="tab-hero-h">전체 점포 <span class="hl">입점 브랜드</span> 현황</h1>
     <p class="tab-hero-p">전국 점포 입점 브랜드를 카테고리별로 한눈에 조회합니다.</p>
   </div>
+
+  <!-- ── 캐스케이딩 브랜드 검색 ── -->
+  <div class="panel" id="t4-search-panel">
+    <div class="ph">브랜드 검색</div>
+    <div class="fgrid" style="margin-bottom:14px">
+      <div class="fg">
+        <label>카테고리</label>
+        <select id="t4-cat1" onchange="onT4Cat1Change()">
+          <option value="">-- 카테고리 선택 --</option>
+          <option value="fashion">패션</option>
+          <option value="nonfashion">비패션</option>
+          <option value="all">전체</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>대분류</label>
+        <select id="t4-cat2" onchange="onT4Cat2Change()" disabled>
+          <option value="">-- 카테고리 먼저 선택 --</option>
+        </select>
+      </div>
+      <div class="fg" style="grid-column:span 2">
+        <label>브랜드</label>
+        <select id="t4-brand-sel" onchange="onT4BrandChange()" disabled>
+          <option value="">-- 대분류 먼저 선택 --</option>
+        </select>
+      </div>
+    </div>
+    <div id="t4-brand-result"></div>
+  </div>
+
   <!-- ── 전체 현황 ── -->
   <div class="panel">
     <div class="ph">전체 현황 <span style="font-weight:400;font-size:10px;color:var(--text-sec);text-transform:none;letter-spacing:0">기본 데이터 v10</span></div>
@@ -3243,6 +3273,109 @@ function renderBrandOverview(){
     <div class="panel ov-unclassified"><div class="ov-brand-list">${ub.map(b=>`<span class="ov-brand">${b}</span>`).join('')}</div></div>`;
   }
   el.innerHTML=html;
+}
+
+// ── 브랜드 현황 탭 캐스케이딩 검색 ──
+function onT4Cat1Change() {
+  const cat1 = document.getElementById('t4-cat1').value;
+  const cat2El = document.getElementById('t4-cat2');
+  const brandEl = document.getElementById('t4-brand-sel');
+  document.getElementById('t4-brand-result').innerHTML = '';
+
+  let cats = [];
+  if (cat1 === 'fashion')    cats = FASHION_CATS;
+  else if (cat1 === 'nonfashion') cats = NONFASHION_CATS;
+  else if (cat1 === 'all')   cats = [...FASHION_CATS, ...NONFASHION_CATS, '미분류'];
+
+  cat2El.disabled = !cat1;
+  cat2El.innerHTML = `<option value="">-- 대분류 선택 (${cats.length}개) --</option>` +
+    cats.map(c => `<option value="${c}">${c}</option>`).join('');
+  brandEl.disabled = true;
+  brandEl.innerHTML = `<option value="">-- 대분류 먼저 선택 --</option>`;
+}
+
+function onT4Cat2Change() {
+  const cat2 = document.getElementById('t4-cat2').value;
+  const brandEl = document.getElementById('t4-brand-sel');
+  document.getElementById('t4-brand-result').innerHTML = '';
+
+  if (!cat2) { brandEl.disabled = true; return; }
+
+  const tenants = EXCEL_TENANTS || {};
+  const brandSet = new Set();
+  Object.values(tenants).forEach(floors => {
+    Object.values(floors).forEach(brands => {
+      brands.forEach(({ brand, isVacant, sheetCat }) => {
+        if (isVacant || !brand || brand.length < 2) return;
+        const cat = sheetCatToInternal(sheetCat) || classifyBrand(brand) || '미분류';
+        if (cat === cat2) brandSet.add(brand);
+      });
+    });
+  });
+
+  const sorted = [...brandSet].sort();
+  brandEl.disabled = false;
+  brandEl.innerHTML = `<option value="">-- 브랜드 선택 (${sorted.length}개) --</option>` +
+    sorted.map(b => `<option value="${b}">${b}</option>`).join('');
+}
+
+function onT4BrandChange() {
+  const brand = document.getElementById('t4-brand-sel').value;
+  if (!brand) { document.getElementById('t4-brand-result').innerHTML = ''; return; }
+
+  const tenants = EXCEL_TENANTS || {};
+  const carrying = [];
+  const notCarrying = [];
+
+  Object.entries(tenants).forEach(([store, floors]) => {
+    const found = [];
+    Object.entries(floors).forEach(([floor, brands]) => {
+      brands.forEach(({ brand: b, isVacant }) => {
+        if (!isVacant && b === brand) found.push(floor);
+      });
+    });
+    if (found.length) carrying.push({ store, floors: [...new Set(found)] });
+    else notCarrying.push(store);
+  });
+
+  carrying.sort((a, b) => a.store.localeCompare(b.store, 'ko'));
+
+  const el = document.getElementById('t4-brand-result');
+  const cat = sheetCatToInternal(null) || classifyBrand(brand) || '미분류';
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;
+      padding:12px 14px;background:rgba(30,215,96,.06);border-radius:10px;border:1px solid rgba(30,215,96,.15)">
+      <span style="font-size:18px;font-weight:800;color:#fff">${brand}</span>
+      <span style="font-size:11px;padding:3px 10px;border-radius:9999px;
+        background:rgba(30,215,96,.15);color:var(--green);border:1px solid rgba(30,215,96,.25)">${cat}</span>
+      <span style="font-size:12px;color:var(--text-sec);margin-left:auto">
+        <b style="color:#fff">${carrying.length}</b>개 점포 입점 &nbsp;·&nbsp;
+        <b style="color:var(--text-dim)">${notCarrying.length}</b>개 미입점
+      </span>
+    </div>
+
+    <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+      color:var(--green);margin-bottom:8px">입점 점포 (${carrying.length}개)</div>
+    ${carrying.length ? carrying.map(({ store, floors }) => `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;
+        background:var(--surface-3);border-radius:8px;border:1px solid var(--border);margin-bottom:6px">
+        <div style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0"></div>
+        <div style="font-size:13px;font-weight:600;color:#fff;flex:1">${store}</div>
+        <div style="font-size:11px;color:var(--text-sec)">${floors.join(' · ')}</div>
+      </div>`).join('')
+    : `<div style="color:var(--text-sec);font-size:13px;padding:8px 0">입점 점포 없음</div>`}
+
+    ${notCarrying.length ? `
+      <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+        color:var(--text-dim);margin:16px 0 8px">미입점 점포 — 공백 기회 (${notCarrying.length}개)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${notCarrying.map(s => `
+          <span style="padding:4px 10px;border-radius:9999px;font-size:11px;
+            background:rgba(255,255,255,.04);color:var(--text-dim);
+            border:1px solid rgba(255,255,255,.06)">${s}</span>`).join('')}
+      </div>` : ''}
+  `;
 }
 
 // ── Naver Brand Keyword (Tab 5) ──

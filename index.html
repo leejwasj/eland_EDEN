@@ -854,6 +854,15 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
       <div id="dash-s0-content"><div class="ds-loading"><div class="ds-spin"></div>인구 데이터 분석 중...</div></div>
     </div>
 
+    <!-- SC: 주변 상권 업종 현황 (소상공인 OpenAPI) -->
+    <div class="panel dash-section" id="dash-sc">
+      <div class="ds-hdr">
+        <span class="ds-eye">주변 상권</span>
+        <span class="ds-title">상가업소 업종 현황</span>
+      </div>
+      <div id="dash-sc-content"><div class="ds-loading"><div class="ds-spin"></div>소상공인 API 분석 중...</div></div>
+    </div>
+
     <!-- S1: 상권 현황 -->
     <div class="panel dash-section" id="dash-s1">
       <div class="ds-hdr">
@@ -3472,8 +3481,8 @@ async function selectStore(storeName) {
   document.getElementById('dash-rad-badge').textContent = '반경 3km';
 
   // Reset sections
-  const loadingMsg = { s1: '카카오 API 분석 중...', s2: '소상공인 데이터 분석 중...', s3: 'Google Sheets 데이터 로딩 중...', s4: '추천 브랜드 분석 중...', s5: '네이버 DataLab 데이터 수집 중...' };
-  ['s1','s2','s3','s4','s5'].forEach(s => {
+  const loadingMsg = { sc: '소상공인 API 분석 중...', s1: '카카오 API 분석 중...', s2: '소상공인 데이터 분석 중...', s3: 'Google Sheets 데이터 로딩 중...', s4: '추천 브랜드 분석 중...', s5: '네이버 DataLab 데이터 수집 중...' };
+  ['sc','s1','s2','s3','s4','s5'].forEach(s => {
     const el = document.getElementById(`dash-${s}-content`);
     if (el) el.innerHTML = `<div class="ds-loading"><div class="ds-spin"></div>${loadingMsg[s]}</div>`;
   });
@@ -3504,6 +3513,9 @@ async function selectStore(storeName) {
 
     // S0: Seoul API 실데이터로 업데이트 (서울 지점만)
     renderAreaDemoPanel(storeName, area?.seoulPop ?? null, area?.density ?? null);
+
+    // SC: 소상공인 업종 현황
+    renderAreaCommercial(area?.commercial ?? null);
 
     // S1: 상권 현황
     renderDashCatChart(cats, storeName);
@@ -3575,6 +3587,81 @@ function renderDashCatChart(cats, storeName) {
 
 function renderDashDemographics(demographics, areaData, totalItems3k) {
   renderRichDemographics('dash-s2-content', demographics, areaData, totalItems3k);
+}
+
+function renderAreaCommercial(commercial) {
+  const el = document.getElementById('dash-sc-content');
+  if (!el) return;
+
+  if (!commercial || !commercial.sampleCount) {
+    el.innerHTML = '<div style="color:var(--text-sec);font-size:13px;padding:4px 0">소상공인 API 데이터를 불러오지 못했습니다.</div>';
+    return;
+  }
+
+  const { cats, sampleCount, totalCount } = commercial;
+  const DISPLAY_CATS = ['음식','소매','생활서비스','의료','학문/교육','관광/여가'];
+  const CAT_COLORS = {
+    '음식': '#f97316',
+    '소매': '#3b82f6',
+    '생활서비스': '#a78bfa',
+    '의료': '#f43f5e',
+    '학문/교육': '#22c55e',
+    '관광/여가': '#eab308',
+  };
+
+  // 지배 업종 산출
+  const dominant = DISPLAY_CATS.reduce((best, c) => (cats[c] || 0) > (cats[best] || 0) ? c : best, DISPLAY_CATS[0]);
+  const dominantLabel = dominant + ' 중심 상권';
+  const maxCnt = Math.max(...DISPLAY_CATS.map(c => cats[c] || 0), 1);
+  const displayTotal = totalCount || sampleCount;
+  const isSample = totalCount > sampleCount;
+
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}. ${today.getMonth()+1}. ${today.getDate()}.`;
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+      <span style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:9999px;
+        background:rgba(30,215,96,.12);color:var(--green);border:1px solid rgba(30,215,96,.25)">
+        ${dominantLabel}
+      </span>
+      <span style="font-size:13px;color:var(--text-sec)">
+        총 <b style="color:#fff;font-weight:700">${displayTotal.toLocaleString()}</b>개 점포
+        ${isSample ? `<span style="font-size:10px;color:var(--text-dim)">(표본 ${sampleCount.toLocaleString()}개 분석)</span>` : ''}
+      </span>
+    </div>
+
+    ${DISPLAY_CATS.map(cat => {
+      const cnt = cats[cat] || 0;
+      const pct = sampleCount > 0 ? (cnt / sampleCount * 100).toFixed(1) : '0.0';
+      const barW = Math.round(cnt / maxCnt * 100);
+      const color = CAT_COLORS[cat] || '#6b7280';
+      return `
+        <div style="margin-bottom:13px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+            <span style="font-size:13px;font-weight:500;color:${cnt > 0 ? '#fff' : 'var(--text-sec)'}">${cat}</span>
+            <span style="font-size:12px;color:var(--text-sec);font-variant-numeric:tabular-nums">
+              ${cnt.toLocaleString()} (${pct}%)
+            </span>
+          </div>
+          <div style="height:5px;background:rgba(255,255,255,.07);border-radius:9999px;overflow:hidden">
+            <div class="sc-bar" data-w="${barW}"
+              style="height:100%;width:0%;background:${color};border-radius:9999px;transition:width .7s ease"></div>
+          </div>
+        </div>`;
+    }).join('')}
+
+    <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border);
+      font-size:10px;color:var(--text-dim)">
+      출처: 소상공인시장진흥공단 상가업소 OpenAPI &nbsp;·&nbsp; 수집 ${dateStr}
+    </div>
+  `;
+
+  setTimeout(() => {
+    document.querySelectorAll('#dash-sc-content .sc-bar').forEach(b => {
+      b.style.width = (b.dataset.w || 0) + '%';
+    });
+  }, 120);
 }
 
 function renderAreaDemoPanel(storeName, seoulPop, density) {
@@ -4019,8 +4106,8 @@ function renderOnlineBest() {
 async function fetchDetailedArea(sd) {
   const [regionRes, s500Res, s1kRes] = await Promise.allSettled([
     fetch(`/api/kakao?mode=region&x=${sd.lng}&y=${sd.lat}`).then(r => r.json()),
-    fetch(`/api/soho?lat=${sd.lat}&lng=${sd.lng}&radius=500&numOfRows=300`).then(r => r.json()),
-    fetch(`/api/soho?lat=${sd.lat}&lng=${sd.lng}&radius=1000&numOfRows=500`).then(r => r.json()),
+    fetch(`/api/soho?lat=${sd.lat}&lng=${sd.lng}&radius=500&numOfRows=1000`).then(r => r.json()),
+    fetch(`/api/soho?lat=${sd.lat}&lng=${sd.lng}&radius=1000&numOfRows=1000`).then(r => r.json()),
   ]);
 
   const docs = regionRes.value?.documents || [];
@@ -4034,12 +4121,38 @@ async function fetchDetailedArea(sd) {
     isSeoul: hdong.region_1depth_name === '서울특별시',
   };
 
-  const parseCount = res => {
-    if (res.status !== 'fulfilled') return 0;
-    const v = res.value;
-    return (v?.body?.items || v?.result?.items || []).length;
-  };
+  const getItems = res => (res.status === 'fulfilled')
+    ? (res.value?.body?.items || res.value?.result?.items || []) : [];
+
+  const parseCount = res => getItems(res).length;
   const density = { r500: parseCount(s500Res), r1k: parseCount(s1kRes) };
+
+  // 500m 반경 업종 대분류 파싱
+  const normCat = name => {
+    if (!name) return null;
+    if (name.includes('음식')) return '음식';
+    if (name.includes('소매')) return '소매';
+    if (name.includes('생활서비스') || name.includes('생활 서비스')) return '생활서비스';
+    if (name.includes('의료')) return '의료';
+    if (name.includes('학문') || name.includes('교육')) return '학문/교육';
+    if (name.includes('관광') || name.includes('여가')) return '관광/여가';
+    if (name.includes('스포츠')) return '스포츠';
+    if (name.includes('숙박')) return '숙박';
+    return null;
+  };
+  const DISPLAY_CATS = ['음식','소매','생활서비스','의료','학문/교육','관광/여가'];
+  let commercial = null;
+  const s500Items = getItems(s500Res);
+  if (s500Items.length) {
+    const cats = {};
+    DISPLAY_CATS.forEach(c => { cats[c] = 0; });
+    s500Items.forEach(it => {
+      const c = normCat(it.indsLclsNm?.trim() || '');
+      if (c && cats[c] !== undefined) cats[c]++;
+    });
+    const totalCount = parseInt(s500Res.value?.body?.totalCount || s500Res.value?.result?.totalCount || s500Items.length);
+    commercial = { cats, sampleCount: s500Items.length, totalCount };
+  }
 
   let seoulPop = null;
   if (region.isSeoul && region.code) {
@@ -4050,7 +4163,7 @@ async function fetchDetailedArea(sd) {
     } catch (_) {}
   }
 
-  return { region, density, seoulPop };
+  return { region, density, seoulPop, commercial };
 }
 
 function parseSeoulPop(data) {

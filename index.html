@@ -2336,12 +2336,63 @@ async function runBrandToStore(){
     const all=results.filter(r=>r.status==='fulfilled'&&!r.value.fail).map(r=>r.value);
     const alreadyIn=all.filter(r=>brandAlreadyInStore(brand,r.name));
     const ranked=all.filter(r=>!brandAlreadyInStore(brand,r.name)).sort((a,b)=>b.score-a.score||a.cnt-b.cnt);
+
+    // ── EBG 연동: 해당 브랜드 EBG 분석 있으면 선호지역 반영 ──
+    const ebgEntry = EBG_ENTRIES.find(e =>
+      e.analysis && (e.brand === brand || e.analysis.brandName === brand)
+    );
+    if (ebgEntry?.analysis) {
+      const ebg = ebgEntry.analysis;
+      const preferredAreas = ebg.preferredAreas || [];
+      const avoidText = (ebg.storeConditions?.avoidConditions || '').toLowerCase();
+      ranked.forEach(r => {
+        const areaInfo = (typeof STORE_AREA_INFO !== 'undefined' && STORE_AREA_INFO[r.name]) || {};
+        const district = (areaInfo.district || '') + (areaInfo.city || '') + r.name;
+        const inPreferred = preferredAreas.length && preferredAreas.some(area => district.includes(area));
+        if (inPreferred) { r.ebgBoost = true; r.score = Math.min(40, r.score + 6); }
+      });
+      ranked.sort((a,b) => b.score - a.score || a.cnt - b.cnt);
+    }
+
     document.getElementById('t1-res').style.display='block';
     document.getElementById('t1-title').textContent=`"${brand}" 최적 입점 점포 순위 (${ranked.length}개 점포 · ${alreadyIn.length}개 이미 입점 제외)`;
-    document.getElementById('t1-list').innerHTML=ranked.map((r,i)=>`
-      <div class="rank-item">
+
+    // EBG 인사이트 배너
+    let ebgBanner = '';
+    if (ebgEntry?.analysis) {
+      const ebg = ebgEntry.analysis;
+      const areas = (ebg.preferredAreas || []).join(' · ') || '—';
+      const cond = ebg.storeConditions;
+      const tags = [
+        ebg.expansionPlan ? `📅 ${ebg.expansionPlan}` : null,
+        cond?.area ? `📐 ${cond.area}` : null,
+        cond?.location ? `📍 ${cond.location}` : null,
+        areas !== '—' ? `🗺 선호지역: ${areas}` : null,
+      ].filter(Boolean);
+      ebgBanner = `
+        <div style="padding:14px 16px;background:rgba(30,215,96,.06);border:1px solid rgba(30,215,96,.2);
+          border-radius:12px;margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <span style="font-size:10px;font-weight:800;color:var(--green);letter-spacing:.1em;text-transform:uppercase">📋 키맨 EBG 반영</span>
+            <span style="font-size:11px;color:var(--text-sec)">${ebgEntry.md} MD · ${ebgEntry.date || ''}</span>
+            ${ebgEntry.analysis.preferredAreas?.length ? `<span style="margin-left:auto;font-size:10px;padding:2px 8px;border-radius:9999px;background:rgba(30,215,96,.15);color:var(--green);border:1px solid rgba(30,215,96,.25)">선호지역 점수 +6 적용</span>` : ''}
+          </div>
+          ${ebg.goal ? `<div style="font-size:12px;color:#ddd;margin-bottom:8px;line-height:1.6">🎯 ${ebg.goal}</div>` : ''}
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            ${tags.map(t => `<span style="font-size:11px;padding:3px 10px;border-radius:9999px;
+              background:rgba(255,255,255,.05);color:var(--text-sec);border:1px solid rgba(255,255,255,.09)">${t}</span>`).join('')}
+          </div>
+          ${(ebg.insights||[]).length ? `
+          <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06)">
+            ${ebg.insights.slice(0,2).map(ins=>`<div style="font-size:11px;color:var(--text-sec);line-height:1.6;margin-bottom:3px">${ins}</div>`).join('')}
+          </div>` : ''}
+        </div>`;
+    }
+
+    document.getElementById('t1-list').innerHTML = ebgBanner + ranked.map((r,i)=>`
+      <div class="rank-item" ${r.ebgBoost ? 'style="border-color:rgba(30,215,96,.3);background:rgba(30,215,96,.03)"' : ''}>
         <div class="rn ${i<3?'gold':''}">${i+1}</div>
-        <div style="flex:1"><div class="r-store">${r.name}</div>
+        <div style="flex:1"><div class="r-store">${r.name}${r.ebgBoost ? ' <span style="font-size:10px;font-weight:700;color:var(--green);background:rgba(30,215,96,.12);padding:1px 7px;border-radius:9999px;border:1px solid rgba(30,215,96,.25)">EBG ↑</span>' : ''}</div>
           <div class="r-detail">${r.cnt===0?'반경 내 동일 브랜드 없음':'동일 브랜드 '+r.cnt+'곳 발견'}</div></div>
         <div style="text-align:right">
           <div class="r-score">${r.score}<span style="font-size:12px;color:var(--sec)">/40</span></div>
@@ -5103,9 +5154,16 @@ async function submitEbg() {
     else analysisError = data.error || `API 오류 (${r.status})`;
   } catch (e) { analysisError = e.message; }
 
+  // 브랜드명 자동 추출: 입력칸이 비어있거나 analysis가 다른 이름을 알려주면 업데이트
+  const detectedBrand = analysis?.brandName || brand;
+  if (!brand && detectedBrand) {
+    document.getElementById('ebg-brand').value = detectedBrand;
+  }
+
   const entry = {
     id: Date.now().toString(),
-    brand, md, date,
+    brand: detectedBrand || brand,
+    md, date,
     image: imgEl.src,
     analysis,
     analysisError,
@@ -5127,10 +5185,10 @@ async function submitEbg() {
 
   if (analysis) {
     msg.style.color = 'var(--green)';
-    msg.textContent = `✓ "${brand}" 분석 완료`;
+    msg.textContent = `✓ "${entry.brand}" 분석 완료${detectedBrand !== brand ? ' (브랜드명 자동 추출)' : ''}`;
   } else {
     msg.style.color = '#ff6060';
-    msg.textContent = `"${brand}" 등록됨 — 분석 실패: ${analysisError || '알 수 없는 오류'}`;
+    msg.textContent = `"${entry.brand}" 등록됨 — 분석 실패: ${analysisError || '알 수 없는 오류'}`;
   }
   setTimeout(() => { msg.style.display = 'none'; }, 5000);
 

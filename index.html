@@ -3041,6 +3041,17 @@ async function scoreRecommendations(brandFreq, nearbyBrands, store, demographics
   const results = [];
   const NON_REC_CATS = new Set(['카페','패스트푸드','식당','음식점','편의점','화장품','생활용품점','리징','리빙']);
 
+  // 패션 브랜드 풀로 후보 보충 (소상공인 API 결과 부족 시 항상 10개 채우기)
+  const FASHION_SUPPLEMENT_CATS = ['여성/영여성','캐주얼','신사','스포츠','아동','잡화'];
+  const supplementBrands = FASHION_SUPPLEMENT_CATS.flatMap(cat =>
+    (COMP_GROUPS[cat] || []).map(b => ({ brand: b, cat }))
+  );
+  for (const { brand, cat } of supplementBrands) {
+    if (!brandFreq[brand]) {
+      brandFreq[brand] = { catKey: cat, count: 1 };
+    }
+  }
+
   for (const [brand, info] of Object.entries(brandFreq)) {
     if (brand.length < 2) continue;
     const { catKey } = info;

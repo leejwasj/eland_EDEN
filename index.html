@@ -3039,10 +3039,13 @@ async function fetchNaverAvgPrice(brand) {
 async function scoreRecommendations(brandFreq, nearbyBrands, store, demographics) {
   const { brandSet: enteredBrands, catSet: occupiedCats } = getSheetInfo(store);
   const results = [];
-  const NON_REC_CATS = new Set(['카페','패스트푸드','식당','음식점','편의점','화장품','생활용품점','리징','리빙']);
+  const NON_REC_CATS = new Set(['카페','패스트푸드','식당','음식점','편의점','화장품','생활용품점','리징','리빙','잡화']);
 
-  // 패션 브랜드 풀로 후보 보충 (소상공인 API 결과 부족 시 항상 10개 채우기)
-  const FASHION_SUPPLEMENT_CATS = ['여성/영여성','캐주얼','신사','스포츠','아동','잡화'];
+  // 대형 SPA·글로벌 패스트패션 제외 (이미 입점 많고 주작처럼 보임)
+  const SPA_EXCLUDE = new Set(['자라','H&M','망고','GAP','유니클로','스파오','무신사스탠다드','포에버21','탑텐','8seconds','에잇세컨즈']);
+
+  // 패션 브랜드 풀로 후보 보충 — 잡화 제외, 국내외 패션 브랜드 위주
+  const FASHION_SUPPLEMENT_CATS = ['여성/영여성','캐주얼','신사','스포츠','아동'];
   const supplementBrands = FASHION_SUPPLEMENT_CATS.flatMap(cat =>
     (COMP_GROUPS[cat] || []).map(b => ({ brand: b, cat }))
   );
@@ -3056,8 +3059,11 @@ async function scoreRecommendations(brandFreq, nearbyBrands, store, demographics
     if (brand.length < 2) continue;
     const { catKey } = info;
 
-    // Filter 0: 패션 카테고리만
+    // Filter 0: 잡화·F&B 등 비패션 제외
     if (catKey && NON_REC_CATS.has(catKey)) continue;
+
+    // Filter 0-1: 대형 SPA 제외
+    if (SPA_EXCLUDE.has(brand)) continue;
 
     // Filter 1: 반경 1.5km 이내 동일 브랜드 제외 (기존 3km → 완화)
     const nearbyInCat = catKey ? nearbyBrands[catKey] || {} : {};

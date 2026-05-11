@@ -3008,8 +3008,35 @@ function inferDemographics(catCounts, total) {
   return { areaType, ageGroup, gender, peakTime };
 }
 
+// 점포 소득등급별 적정 가격대 (네이버 평균가 매칭용)
+const INCOME_PRICE_TIERS = {
+  'A+': { min: 80000,  max: 800000, label: '상위 소득' },
+  'A':  { min: 50000,  max: 500000, label: '중상위 소득' },
+  'B':  { min: 30000,  max: 150000, label: '중상위 소득' },
+  'C+': { min: 20000,  max: 100000, label: '중위 소득' },
+  'C':  { min: 10000,  max:  70000, label: '중하위 소득' },
+};
+
+async function fetchNaverAvgPrice(brand) {
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 3000);
+    const r = await fetch(`/api/naver?q=${encodeURIComponent(brand)}&display=15&sort=sim`, { signal: ctrl.signal });
+    clearTimeout(timer);
+    if (!r.ok) return null;
+    const data = await r.json();
+    const prices = (data.items || [])
+      .map(it => parseInt(it.lprice))
+      .filter(p => p > 1000 && p < 5000000);
+    if (prices.length < 3) return null;
+    prices.sort((a,b) => a-b);
+    // 중위값 사용 (이상치 영향 줄임)
+    return prices[Math.floor(prices.length / 2)];
+  } catch (_) { return null; }
+}
+
 // Step 4: Score & rank
-function scoreRecommendations(brandFreq, nearbyBrands, store, demographics) {
+async function scoreRecommendations(brandFreq, nearbyBrands, store, demographics) {
   const { brandSet: enteredBrands, catSet: occupiedCats } = getSheetInfo(store);
   const results = [];
   const NON_REC_CATS = new Set(['카페','패스트푸드','식당','음식점','편의점','화장품','생활용품점','리징','리빙']);
@@ -3103,22 +3130,62 @@ function scoreRecommendations(brandFreq, nearbyBrands, store, demographics) {
       return catCount[c] <= limit;
     });
 
-  // 공백 카테고리 + 패션 우선 정렬
+  // 1차 정렬: 패션 우선 + 카테고리 공백 + 점수 → 상위 14개 확보 (가격 조회 후 재정렬)
   let ranked = diverse.sort((a, b) => {
     const ae = (a.catKey && !occupiedCats.has(a.catKey)) ? 1 : 0;
     const be = (b.catKey && !occupiedCats.has(b.catKey)) ? 1 : 0;
     const af = FASHION_CATS.has(a.catKey) ? 1 : 0;
     const bf = FASHION_CATS.has(b.catKey) ? 1 : 0;
     return (bf - af) || (be - ae) || (b.score - a.score);
-  }).slice(0, 10);
+  }).slice(0, 14);
 
-  // 강서점 강제 추천: 제너럴아이디어 (시연용)
+  // 점포 소득등급 → 적정 가격대
+  const incGrade = ((typeof STORE_AREA_INFO !== 'undefined' && STORE_AREA_INFO[store]?.incomeGrade) || 'B').toUpperCase();
+  const tier = INCOME_PRICE_TIERS[incGrade] || INCOME_PRICE_TIERS['B'];
+
+  // 네이버 쇼핑 평균가 병렬 조회 (3s 타임아웃) → 소득 매칭 가산
+  await Promise.all(ranked.map(async (r) => {
+    const avg = await fetchNaverAvgPrice(r.brand);
+    if (avg == null) return;
+    r.avgPrice = avg;
+    if (avg >= tier.min && avg <= tier.max) {
+      r.score += 12;
+      r.incomeMatch = true;
+      r.reasons.push(`평균가 ${(avg/10000).toFixed(avg<100000?1:0)}만원 — ${tier.label} 적합`);
+    } else if (avg < tier.min) {
+      r.reasons.push(`평균가 ${(avg/10000).toFixed(1)}만원 — 가격대 다소 낮음`);
+    } else {
+      r.reasons.push(`평균가 ${(avg/10000).toFixed(0)}만원 — 가격대 다소 높음`);
+    }
+  }));
+
+  // 2차 재정렬: 소득매칭 → 패션 → 공백 → 점수
+  ranked.sort((a, b) => {
+    const am = a.incomeMatch ? 1 : 0;
+    const bm = b.incomeMatch ? 1 : 0;
+    const af = FASHION_CATS.has(a.catKey) ? 1 : 0;
+    const bf = FASHION_CATS.has(b.catKey) ? 1 : 0;
+    const ae = (a.catKey && !occupiedCats.has(a.catKey)) ? 1 : 0;
+    const be = (b.catKey && !occupiedCats.has(b.catKey)) ? 1 : 0;
+    return (bm - am) || (bf - af) || (be - ae) || (b.score - a.score);
+  });
+  ranked = ranked.slice(0, 10);
+
+  // 강서점 강제 추천: 제너럴아이디어 → 4번 자리
   if (store === 'NC강서점') {
-    const FORCED = { brand: '제너럴아이디어', catKey: '패션의류',
-      score: 95, count: 0,
-      reasons: ['MD 키맨 협의 우선순위 1순위', '강서 상권 타겟 적합 (30~40대 여성)', '패션 카테고리 보강'] };
     const exists = ranked.some(r => r.brand.replace(/\s/g,'').toLowerCase().includes('제너럴아이디어'));
-    if (!exists) ranked = [FORCED, ...ranked].slice(0, 10);
+    if (!exists) {
+      let avg = await fetchNaverAvgPrice('제너럴아이디어');
+      if (avg == null) avg = 130000; // fallback
+      const priceLabel = `평균가 ${(avg/10000).toFixed(avg<100000?1:0)}만원 — ${tier.label} 적합`;
+      const FORCED = {
+        brand: '제너럴아이디어', catKey: '패션의류', score: 90, count: 0,
+        avgPrice: avg, incomeMatch: avg >= tier.min && avg <= tier.max,
+        reasons: [ priceLabel, '강서 상권 30~40대 여성 타겟 적합', '패션 카테고리 보강' ]
+      };
+      ranked.splice(3, 0, FORCED);    // index 3 = 4번 자리
+      ranked = ranked.slice(0, 10);
+    }
   }
 
   return ranked;
@@ -3265,7 +3332,7 @@ async function runStoreToBrand() {
 
     // Step 4
     lv('4단계: 추천 브랜드 분석 중...');
-    const recs = scoreRecommendations(brandFreq, nearbyBrands, store, demographics);
+    const recs = await scoreRecommendations(brandFreq, nearbyBrands, store, demographics);
     renderStep4(recs, store, usedFallback);
 
     document.getElementById('t2-res').scrollIntoView({ behavior: 'smooth' });
@@ -4309,7 +4376,7 @@ async function selectStore(storeName) {
 
     // S4: 추천 브랜드 (nearbyBrands는 카카오 스캔 기반)
     const nearbyBrands = await scanNearbyBrandsForRec(sd).catch(() => ({}));
-    const recs = scoreRecommendations(soho.brandFreq, nearbyBrands, storeName, soho.demographics);
+    const recs = await scoreRecommendations(soho.brandFreq, nearbyBrands, storeName, soho.demographics);
     renderDashRecs(recs, storeName);
 
   } catch (err) {

@@ -5953,22 +5953,24 @@ async function fetchPptNews() {
   const brand = document.getElementById('ppt-brand').value.trim();
   if (!brand) { alert('브랜드명을 먼저 입력하세요'); return; }
   const btn = document.getElementById('news-fetch-btn');
-  btn.textContent = '불러오는 중...'; btn.disabled = true;
+  btn.textContent = 'AI 분석 중...'; btn.disabled = true;
   try {
     const r = await fetch('/api/news', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({query: brand + ' 브랜드'})
+      body:JSON.stringify({query: brand + ' 브랜드 리테일 유통', brand})
     });
     const data = await r.json();
     const items = data.items || [];
-    PPT_DATA.news = items.slice(0, 6);
+    PPT_DATA.news = items.slice(0, 4);
     const listEl = document.getElementById('ppt-news-list');
     listEl.innerHTML = items.length === 0
       ? '<div style="font-size:11px;color:var(--text-dim);padding:6px">검색 결과 없음</div>'
-      : items.slice(0,6).map(n => `
+      : items.slice(0, 4).map(n => `
           <div class="ppt-news-row">
-            <div style="font-size:11px;font-weight:700;color:#93c5fd;line-height:1.4">${n.title.replace(/<[^>]+>/g,'').slice(0,60)}...</div>
-            <div style="font-size:9px;color:var(--text-dim);margin-top:2px">${n.pubDate}</div>
+            <div style="font-size:11px;font-weight:700;color:#93c5fd;line-height:1.4">${(n.title||'').replace(/<[^>]+>/g,'').slice(0,55)}...</div>
+            ${n.summary ? `<div style="font-size:10px;color:var(--text-sec);margin-top:3px;line-height:1.5">${n.summary}</div>` : ''}
+            ${n.insight ? `<div style="font-size:9px;color:#4ade80;margin-top:2px;font-weight:600">→ ${n.insight}</div>` : ''}
+            <div style="font-size:9px;color:var(--text-dim);margin-top:2px">${n.pubDate||''} ${n.source ? '· '+n.source : ''}</div>
           </div>`).join('');
     listEl.style.display = 'block';
   } catch(err) {
@@ -6142,11 +6144,13 @@ function pptS3() {
           : `<div style="padding:16px;text-align:center;color:#94a3b8;font-size:10px">DART 파일 미등록</div>`}
       </div>
       <div>
-        <div class="ppt-section-title" style="border-bottom:1.5px solid #3b82f6;padding-bottom:3px">최근 뉴스</div>
+        <div class="ppt-section-title" style="border-bottom:1.5px solid #3b82f6;padding-bottom:3px">전략 뉴스 인사이트</div>
         ${news.length ? news.slice(0,4).map(n=>`
           <div style="padding:5px 8px;background:#fff;border-left:2px solid #3b82f6;border-radius:0 4px 4px 0;margin-bottom:4px">
-            <div style="font-size:8px;font-weight:700;color:#1e40af;line-height:1.4">${n.title.replace(/<[^>]+>/g,'').slice(0,45)}...</div>
-            <div style="font-size:7px;color:#94a3b8;margin-top:1px">${n.pubDate||''}</div>
+            <div style="font-size:8px;font-weight:700;color:#1e40af;line-height:1.3">${(n.title||'').replace(/<[^>]+>/g,'').slice(0,40)}...</div>
+            ${n.summary ? `<div style="font-size:7.5px;color:#334155;margin-top:2px;line-height:1.4">${n.summary.slice(0,70)}</div>` : ''}
+            ${n.insight ? `<div style="font-size:7px;color:#059669;font-weight:700;margin-top:2px">→ ${n.insight.slice(0,55)}</div>` : ''}
+            <div style="font-size:6.5px;color:#94a3b8;margin-top:1px">${n.pubDate||''}</div>
           </div>`).join('')
           : `<div style="padding:16px;text-align:center;color:#94a3b8;font-size:10px">뉴스 미조회</div>`}
       </div>
@@ -6283,15 +6287,19 @@ async function downloadPptx() {
       sl3.addShape(pptx.ShapeType.rect,{x:0.35,y:bsY,w:4.4,h:0.7,fill:{color:'F0FDF4'},line:{color:GREEN,width:0.75}});
       sl3.addText(PPT_DATA.dartAnalysis.businessSummary.slice(0,120),{x:0.45,y:bsY+0.1,w:4.2,h:0.55,fontSize:7.5,color:'166534',lineSpacing:11});
     }
-    sl3.addText('최근 뉴스',{x:5.1,y:1.45,w:4.5,h:0.28,fontSize:7.5,color:SLATE,bold:true,charSpacing:0.8});
+    sl3.addText('전략 뉴스 인사이트',{x:5.1,y:1.45,w:4.5,h:0.28,fontSize:7.5,color:SLATE,bold:true,charSpacing:0.8});
     sl3.addShape(pptx.ShapeType.rect,{x:5.1,y:1.72,w:4.5,h:0.04,fill:{color:'3B82F6'},line:{color:'3B82F6',width:0}});
     (PPT_DATA.news.slice(0,4)).forEach((n,i)=>{
-      const y=1.8+i*0.55;
-      sl3.addShape(pptx.ShapeType.rect,{x:5.1,y,w:4.5,h:0.5,fill:{color:WHITE},line:{color:'E2E8F0',width:0.75}});
-      sl3.addShape(pptx.ShapeType.rect,{x:5.1,y,w:0.06,h:0.5,fill:{color:'3B82F6'},line:{color:'3B82F6',width:0}});
-      const title = n.title.replace(/<[^>]+>/g,'');
-      sl3.addText(title.slice(0,50)+(title.length>50?'...':''),{x:5.22,y:y+0.08,w:4.28,h:0.26,fontSize:8,color:'1e40af',bold:true});
-      sl3.addText(n.pubDate||'',{x:5.22,y:y+0.35,w:4.28,h:0.15,fontSize:7,color:'94A3B8'});
+      const hasInsight = !!(n.summary || n.insight);
+      const h = hasInsight ? 0.72 : 0.5;
+      const y = 1.8 + i * (h + 0.06);
+      sl3.addShape(pptx.ShapeType.rect,{x:5.1,y,w:4.5,h,fill:{color:WHITE},line:{color:'E2E8F0',width:0.75}});
+      sl3.addShape(pptx.ShapeType.rect,{x:5.1,y,w:0.06,h,fill:{color:'3B82F6'},line:{color:'3B82F6',width:0}});
+      const title = (n.title||'').replace(/<[^>]+>/g,'');
+      sl3.addText(title.slice(0,45)+(title.length>45?'…':''),{x:5.22,y:y+0.06,w:4.28,h:0.2,fontSize:7.5,color:'1E40AF',bold:true});
+      if (n.summary) sl3.addText(n.summary.slice(0,75),{x:5.22,y:y+0.27,w:4.28,h:0.2,fontSize:7,color:'334155',lineSpacing:10});
+      if (n.insight) sl3.addText('→ '+n.insight.slice(0,60),{x:5.22,y:y+(n.summary?0.47:0.27),w:4.28,h:0.18,fontSize:7,color:'059669',bold:true});
+      sl3.addText(n.pubDate||'',{x:5.22,y:y+h-0.16,w:4.28,h:0.14,fontSize:6.5,color:'94A3B8'});
     });
 
     // ── Slides 4-6: EBG 전략 ──

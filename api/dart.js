@@ -1,3 +1,20 @@
+const PREFERRED_MODELS = [
+  'gemini-2.0-flash',
+  'gemini-1.5-flash',
+  'gemini-1.5-flash-8b',
+  'gemini-1.5-pro',
+];
+
+async function callGemini(key, modelId, body) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${key}`;
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return r;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -34,40 +51,47 @@ export default async function handler(req, res) {
 
 반드시 JSON만 반환하세요. 마크다운 코드블록(\`\`\`) 없이 순수 JSON으로만 응답하세요.`;
 
+  const requestBody = {
+    contents: [{
+      parts: [
+        { inline_data: { mime_type: mimeType, data: base64Data } },
+        ...extraPages.map(p => ({ inline_data: { mime_type: p.mimeType, data: p.data } })),
+        { text: prompt }
+      ]
+    }],
+    generationConfig: { temperature: 0.1, maxOutputTokens: 1024 }
+  };
+
   try {
-    const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
-    const listData = await listRes.json();
-    const availableModels = (listData.models || []).map(m => m.name);
-    const flashModel = availableModels.find(n => n.includes('flash')) || availableModels[0];
-    if (!flashModel) return res.status(503).json({ error: '사용 가능한 모델 없음' });
-    const modelId = flashModel.replace('models/', '');
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${key}`;
+    // 선호 모델 목록 순서대로 시도, 과부하(503/429) 시 다음 모델로 폴백
+    let lastError = '사용 가능한 모델 없음';
+    for (const modelId of PREFERRED_MODELS) {
+      let r;
+      try {
+        r = await callGemini(key, modelId, requestBody);
+      } catch (_) {
+        continue;
+      }
 
-    const r = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { inline_data: { mime_type: mimeType, data: base64Data } },
-            ...extraPages.map(p => ({ inline_data: { mime_type: p.mimeType, data: p.data } })),
-            { text: prompt }
-          ]
-        }],
-        generationConfig: { temperature: 0.1, maxOutputTokens: 1024 }
-      })
-    });
+      if (r.status === 503 || r.status === 429) {
+        const errData = await r.json().catch(() => ({}));
+        lastError = errData.error?.message || `모델 과부하 (${r.status})`;
+        continue; // 다음 모델 시도
+      }
 
-    if (!r.ok) {
-      const err = await r.json();
-      return res.status(r.status).json({ error: err.error?.message || `Gemini API 오류 (${r.status})` });
+      if (!r.ok) {
+        const errData = await r.json().catch(() => ({}));
+        return res.status(r.status).json({ error: errData.error?.message || `Gemini API 오류 (${r.status})` });
+      }
+
+      const data = await r.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const jsonStr = text.match(/\{[\s\S]*\}/)?.[0];
+      if (!jsonStr) return res.status(200).json({ error: 'JSON 파싱 실패' });
+      return res.status(200).json(JSON.parse(jsonStr));
     }
 
-    const data = await r.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const jsonStr = text.match(/\{[\s\S]*\}/)?.[0];
-    if (!jsonStr) return res.status(200).json({ error: 'JSON 파싱 실패' });
-    return res.status(200).json(JSON.parse(jsonStr));
+    return res.status(503).json({ error: `모든 모델 사용 불가: ${lastError}` });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }

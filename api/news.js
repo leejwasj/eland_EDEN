@@ -14,7 +14,10 @@ export default async function handler(req, res) {
   let rawItems = [];
   try {
     const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=ko&gl=KR&ceid=KR:ko`;
-    const r = await fetch(rssUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; NewsBot/1.0)' } });
+    const rssCtrl = new AbortController();
+    const rssTimer = setTimeout(() => rssCtrl.abort(), 5000);
+    const r = await fetch(rssUrl, { signal: rssCtrl.signal, headers: { 'User-Agent': 'Mozilla/5.0 (compatible; NewsBot/1.0)' } });
+    clearTimeout(rssTimer);
     if (r.ok) {
       const xml = await r.text();
       const itemRegex = /<item>([\s\S]*?)<\/item>/g;
@@ -77,8 +80,11 @@ ${rawItems.map((n, i) => `[${i + 1}] 제목: ${n.title.replace(/<[^>]+>/g, '')}
 반드시 JSON만 반환하세요. 마크다운 코드블록 없이 순수 JSON으로 응답하세요.`;
 
   try {
+    const claudeCtrl = new AbortController();
+    const claudeTimer = setTimeout(() => claudeCtrl.abort(), 8000);
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
+      signal: claudeCtrl.signal,
       headers: {
         'x-api-key': key,
         'anthropic-version': '2023-06-01',
@@ -90,6 +96,7 @@ ${rawItems.map((n, i) => `[${i + 1}] 제목: ${n.title.replace(/<[^>]+>/g, '')}
         messages: [{ role: 'user', content: prompt }]
       })
     });
+    clearTimeout(claudeTimer);
 
     if (!r.ok) return res.status(200).json({ items: rawItems.slice(0, 6) });
 

@@ -1,19 +1,4 @@
-const PREFERRED_MODELS = [
-  'gemini-2.0-flash',
-  'gemini-1.5-flash',
-  'gemini-1.5-flash-8b',
-  'gemini-1.5-pro',
-];
-
-async function callGemini(key, modelId, body) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${key}`;
-  const r = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  return r;
-}
+const MODEL = 'claude-haiku-4-5-20251001';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -22,8 +7,8 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) return res.status(503).json({ error: 'GEMINI_API_KEY 없음' });
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return res.status(503).json({ error: 'ANTHROPIC_API_KEY 없음' });
 
   const { image, extraPages = [], brand } = req.body || {};
   if (!image) return res.status(400).json({ error: 'image 필드 필요' });
@@ -51,47 +36,37 @@ export default async function handler(req, res) {
 
 반드시 JSON만 반환하세요. 마크다운 코드블록(\`\`\`) 없이 순수 JSON으로만 응답하세요.`;
 
-  const requestBody = {
-    contents: [{
-      parts: [
-        { inline_data: { mime_type: mimeType, data: base64Data } },
-        ...extraPages.map(p => ({ inline_data: { mime_type: p.mimeType, data: p.data } })),
-        { text: prompt }
-      ]
-    }],
-    generationConfig: { temperature: 0.1, maxOutputTokens: 1024 }
-  };
+  const imageContent = [
+    { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64Data } },
+    ...extraPages.map(p => ({ type: 'image', source: { type: 'base64', media_type: p.mimeType, data: p.data } })),
+    { type: 'text', text: prompt }
+  ];
 
   try {
-    // 선호 모델 목록 순서대로 시도, 과부하(503/429) 시 다음 모델로 폴백
-    let lastError = '사용 가능한 모델 없음';
-    for (const modelId of PREFERRED_MODELS) {
-      let r;
-      try {
-        r = await callGemini(key, modelId, requestBody);
-      } catch (_) {
-        continue;
-      }
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: imageContent }]
+      })
+    });
 
-      if (r.status === 503 || r.status === 429) {
-        const errData = await r.json().catch(() => ({}));
-        lastError = errData.error?.message || `모델 과부하 (${r.status})`;
-        continue; // 다음 모델 시도
-      }
-
-      if (!r.ok) {
-        const errData = await r.json().catch(() => ({}));
-        return res.status(r.status).json({ error: errData.error?.message || `Gemini API 오류 (${r.status})` });
-      }
-
-      const data = await r.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      const jsonStr = text.match(/\{[\s\S]*\}/)?.[0];
-      if (!jsonStr) return res.status(200).json({ error: 'JSON 파싱 실패' });
-      return res.status(200).json(JSON.parse(jsonStr));
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      return res.status(r.status).json({ error: err.error?.message || `Claude API 오류 (${r.status})` });
     }
 
-    return res.status(503).json({ error: `모든 모델 사용 불가: ${lastError}` });
+    const data = await r.json();
+    const text = data.content?.[0]?.text || '';
+    const jsonStr = text.match(/\{[\s\S]*\}/)?.[0];
+    if (!jsonStr) return res.status(200).json({ error: 'JSON 파싱 실패' });
+    return res.status(200).json(JSON.parse(jsonStr));
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }

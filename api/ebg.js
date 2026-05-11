@@ -1,3 +1,5 @@
+const MODEL = 'claude-haiku-4-5-20251001';
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -5,8 +7,8 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) return res.status(503).json({ error: 'GEMINI_API_KEY 없음 — Vercel 환경변수를 확인하세요' });
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return res.status(503).json({ error: 'ANTHROPIC_API_KEY 없음 — Vercel 환경변수를 확인하세요' });
 
   const { image, brand } = req.body || {};
   if (!image) return res.status(400).json({ error: 'image 필드 필요' });
@@ -45,7 +47,7 @@ EBG 보고서 구조:
     "neighborBrands": ["인근 선호 브랜드들"],
     "avoidConditions": "피해야 할 조건"
   },
-  "preferredAreas": ["강남", "강서" 등 언급 지역],
+  "preferredAreas": ["강남", "강서"],
   "expansionPlan": "출점 계획 요약",
   "needs": ["니즈 태그1", "니즈 태그2", "니즈 태그3"],
   "priceRange": "가격대 또는 null",
@@ -55,43 +57,35 @@ EBG 보고서 구조:
 반드시 JSON만 반환하세요. 마크다운 코드블록(\`\`\`) 없이 순수 JSON으로만 응답하세요.`;
 
   try {
-    // 사용 가능한 모델 먼저 확인
-    const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
-    const listData = await listRes.json();
-    const availableModels = (listData.models || []).map(m => m.name);
-    const flashModel = availableModels.find(n => n.includes('flash')) || availableModels[0];
-    if (!flashModel) return res.status(503).json({ error: '사용 가능한 모델 없음', availableModels });
-    const modelId = flashModel.replace('models/', '');
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${key}`;
-
-    const r = await fetch(url, {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({
-        contents: [{
-          parts: [
-            { inline_data: { mime_type: mimeType, data: base64Data } },
-            { text: prompt }
+        model: MODEL,
+        max_tokens: 2048,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64Data } },
+            { type: 'text', text: prompt }
           ]
-        }],
-        generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 2048,
-        }
+        }]
       })
     });
 
     if (!r.ok) {
-      const err = await r.json();
-      const msg = err.error?.message || `Gemini API 오류 (${r.status})`;
-      return res.status(r.status).json({ error: msg });
+      const err = await r.json().catch(() => ({}));
+      return res.status(r.status).json({ error: err.error?.message || `Claude API 오류 (${r.status})` });
     }
 
     const data = await r.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const text = data.content?.[0]?.text || '';
     const jsonStr = text.match(/\{[\s\S]*\}/)?.[0];
     if (!jsonStr) return res.status(200).json({ goal: null, sections: [], insights: [], needs: [] });
-
     return res.status(200).json(JSON.parse(jsonStr));
   } catch (err) {
     return res.status(500).json({ error: err.message });

@@ -1410,13 +1410,13 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
         </div>
 
         <div class="fg" style="margin-bottom:12px">
-          <label class="fl">EBG 이미지 <span style="color:var(--text-dim);font-weight:400">(1장)</span></label>
+          <label class="fl">EBG 이미지 <span style="color:var(--text-dim);font-weight:400">(최대 5장)</span></label>
           <label class="ebg-upload-zone" id="ebg-drop-zone" ondragover="ebgDragOver(event)" ondragleave="ebgDragLeave()" ondrop="ebgDrop(event)">
-            <input type="file" id="ebg-file" accept="image/*" onchange="ebgFileChange(this)">
-            <div class="ebg-upload-icon">📄</div>
-            <div class="ebg-upload-text"><b>클릭하거나 이미지를 드래그</b>하여 업로드<br>JPG · PNG · WEBP 지원</div>
-            <img class="ebg-preview" id="ebg-preview-img">
+            <input type="file" id="ebg-file" accept="image/*" multiple onchange="ebgFileChange(this)">
+            <div class="ebg-upload-icon" id="ebg-upload-icon">📄</div>
+            <div class="ebg-upload-text" id="ebg-upload-text"><b>클릭하거나 이미지를 드래그</b>하여 업로드<br>최대 5장 · JPG · PNG · WEBP</div>
           </label>
+          <div id="ebg-preview-grid" style="display:none;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px"></div>
         </div>
 
         <button class="btn" id="ebg-submit-btn" onclick="submitEbg()" style="width:100%">EBG 등록 및 AI 분석</button>
@@ -5279,43 +5279,81 @@ function ebgDragOver(e) {
 function ebgDragLeave() {
   document.getElementById('ebg-drop-zone').classList.remove('drag');
 }
+let EBG_PENDING_IMAGES = []; // dataURL 배열, 최대 5장
+
 function ebgDrop(e) {
   e.preventDefault();
   document.getElementById('ebg-drop-zone').classList.remove('drag');
-  const file = e.dataTransfer.files[0];
-  if (file && file.type.startsWith('image/')) ebgLoadFile(file);
+  const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/'));
+  if (files.length) ebgLoadFiles(files);
 }
 function ebgFileChange(input) {
-  if (input.files[0]) ebgLoadFile(input.files[0]);
+  const files = [...input.files].filter(f => f.type.startsWith('image/'));
+  if (files.length) ebgLoadFiles(files);
 }
-function ebgLoadFile(file) {
-  const reader = new FileReader();
-  reader.onload = e => {
-    const img = document.getElementById('ebg-preview-img');
-    img.src = e.target.result;
-    img.style.display = 'block';
-    document.querySelector('.ebg-upload-icon').style.display = 'none';
-  };
-  reader.readAsDataURL(file);
+function ebgLoadFiles(files) {
+  const remain = 5 - EBG_PENDING_IMAGES.length;
+  if (remain <= 0) { alert('최대 5장까지 업로드 가능합니다'); return; }
+  const sliced = files.slice(0, remain);
+  if (files.length > remain) alert(`5장 한도를 초과하여 ${sliced.length}장만 추가됩니다`);
+  let done = 0;
+  sliced.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      EBG_PENDING_IMAGES.push(e.target.result);
+      done++;
+      if (done === sliced.length) renderEbgPendingPreviews();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function renderEbgPendingPreviews() {
+  const grid = document.getElementById('ebg-preview-grid');
+  const icon = document.getElementById('ebg-upload-icon');
+  const text = document.getElementById('ebg-upload-text');
+  if (!EBG_PENDING_IMAGES.length) {
+    grid.style.display = 'none';
+    grid.innerHTML = '';
+    icon.style.display = '';
+    text.innerHTML = '<b>클릭하거나 이미지를 드래그</b>하여 업로드<br>최대 5장 · JPG · PNG · WEBP';
+    return;
+  }
+  icon.style.display = 'none';
+  text.innerHTML = `<b>${EBG_PENDING_IMAGES.length}장 선택됨</b> · 클릭하여 추가 (최대 ${5 - EBG_PENDING_IMAGES.length}장 더 가능)`;
+  grid.style.display = 'grid';
+  grid.innerHTML = EBG_PENDING_IMAGES.map((src, i) => `
+    <div style="position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--border)">
+      <img src="${src}" style="width:100%;height:80px;object-fit:cover;display:block">
+      <button onclick="event.preventDefault();event.stopPropagation();removeEbgPending(${i})"
+        style="position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;
+        background:rgba(0,0,0,.7);color:#fff;border:none;font-size:11px;cursor:pointer;
+        display:flex;align-items:center;justify-content:center">✕</button>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.7));
+        color:#fff;font-size:9px;font-weight:700;padding:8px 4px 3px;text-align:center">P${i+1}</div>
+    </div>`).join('');
+}
+function removeEbgPending(idx) {
+  EBG_PENDING_IMAGES.splice(idx, 1);
+  renderEbgPendingPreviews();
 }
 
 async function submitEbg() {
   const brand = document.getElementById('ebg-brand').value.trim();
   const md = document.getElementById('ebg-md').value.trim();
   const date = document.getElementById('ebg-date').value;
-  const imgEl = document.getElementById('ebg-preview-img');
-  const hasImg = imgEl.style.display !== 'none' && imgEl.src && imgEl.src.startsWith('data:');
 
   if (!brand) { alert('브랜드명을 입력해주세요'); return; }
   if (!md) { alert('MD 이름을 입력해주세요'); return; }
-  if (!hasImg) { alert('EBG 이미지를 업로드해주세요'); return; }
+  if (!EBG_PENDING_IMAGES.length) { alert('EBG 이미지를 업로드해주세요 (최대 5장)'); return; }
+
+  const images = [...EBG_PENDING_IMAGES];
 
   const btn = document.getElementById('ebg-submit-btn');
   const msg = document.getElementById('ebg-submit-msg');
   btn.disabled = true;
   btn.textContent = 'AI 분석 중…';
   msg.style.color = 'var(--text-sec)';
-  msg.textContent = '이미지를 읽고 있습니다. 잠시만 기다려주세요.';
+  msg.textContent = `${images.length}장의 이미지를 종합 분석 중입니다…`;
   msg.style.display = 'block';
 
   let analysis = null;
@@ -5324,14 +5362,13 @@ async function submitEbg() {
     const r = await fetch('/api/ebg', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: imgEl.src, brand })
+      body: JSON.stringify({ images, brand })
     });
     const data = await r.json();
     if (r.ok) analysis = data;
     else analysisError = data.error || `API 오류 (${r.status})`;
   } catch (e) { analysisError = e.message; }
 
-  // 브랜드명 자동 추출: 입력칸이 비어있거나 analysis가 다른 이름을 알려주면 업데이트
   const detectedBrand = analysis?.brandName || brand;
   if (!brand && detectedBrand) {
     document.getElementById('ebg-brand').value = detectedBrand;
@@ -5341,7 +5378,8 @@ async function submitEbg() {
     id: Date.now().toString(),
     brand: detectedBrand || brand,
     md, date,
-    image: imgEl.src,
+    image: images[0],          // 대표 이미지 (갤러리 썸네일용)
+    images,                    // 전체 이미지 배열
     analysis,
     analysisError,
     createdAt: new Date().toISOString()
@@ -5353,9 +5391,8 @@ async function submitEbg() {
   // Reset form
   document.getElementById('ebg-brand').value = '';
   document.getElementById('ebg-md').value = '';
-  imgEl.style.display = 'none';
-  imgEl.src = '';
-  document.querySelector('.ebg-upload-icon').style.display = '';
+  EBG_PENDING_IMAGES = [];
+  renderEbgPendingPreviews();
   document.getElementById('ebg-file').value = '';
   btn.disabled = false;
   btn.textContent = 'EBG 등록 및 AI 분석';
@@ -5427,7 +5464,31 @@ function selectEbg(id) {
   document.getElementById('ebg-detail-brand').textContent = entry.brand;
   document.getElementById('ebg-detail-meta').innerHTML =
     `${entry.md} MD &nbsp;·&nbsp; ${entry.date || '날짜 미기재'}`;
-  document.getElementById('ebg-detail-img').src = entry.image || '';
+  // 다중 이미지 갤러리 표시
+  const detailImgEl = document.getElementById('ebg-detail-img');
+  const imgs = entry.images && entry.images.length ? entry.images : (entry.image ? [entry.image] : []);
+  if (imgs.length <= 1) {
+    detailImgEl.style.display = '';
+    detailImgEl.src = imgs[0] || '';
+    const existing = document.getElementById('ebg-detail-img-grid');
+    if (existing) existing.remove();
+  } else {
+    detailImgEl.style.display = 'none';
+    let grid = document.getElementById('ebg-detail-img-grid');
+    if (!grid) {
+      grid = document.createElement('div');
+      grid.id = 'ebg-detail-img-grid';
+      grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:12px';
+      detailImgEl.parentNode.insertBefore(grid, detailImgEl.nextSibling);
+    }
+    grid.innerHTML = imgs.map((src, i) => `
+      <div style="position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--border);cursor:pointer"
+        onclick="window.open('${src}','_blank')">
+        <img src="${src}" style="width:100%;height:120px;object-fit:cover;display:block">
+        <div style="position:absolute;top:5px;left:5px;background:rgba(0,0,0,.7);color:#fff;
+          font-size:10px;font-weight:700;padding:2px 7px;border-radius:9999px">P${i+1}</div>
+      </div>`).join('');
+  }
 
   const analysisWrap = document.getElementById('ebg-analysis-wrap');
   const loadingEl = document.getElementById('ebg-analysis-loading');
@@ -5435,7 +5496,7 @@ function selectEbg(id) {
   if (entry.analysis) {
     loadingEl.style.display = 'none';
     analysisWrap.style.display = 'block';
-    renderEbgAnalysis(entry.analysis);
+    renderEbgAnalysis(entry.analysis, entry);
   } else {
     analysisWrap.style.display = 'none';
     loadingEl.style.display = 'block';
@@ -5456,9 +5517,21 @@ function selectEbg(id) {
   detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function renderEbgAnalysis(a) {
+function renderEbgAnalysis(a, entry) {
   const wrap = document.getElementById('ebg-analysis-wrap');
   const parts = [];
+
+  // ── 종합 요약 (최상단) ──
+  if (a.summary) {
+    parts.push(`
+      <div style="padding:14px 16px;background:linear-gradient(135deg,rgba(30,215,96,.08),rgba(83,213,242,.05));
+        border:1px solid rgba(30,215,96,.22);border-radius:12px;margin-bottom:14px">
+        <div style="font-size:9px;font-weight:800;color:var(--green);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+          <span>📋</span> EBG 종합 요약
+        </div>
+        <div style="font-size:13px;color:#e8eef5;line-height:1.75;font-weight:500">${a.summary}</div>
+      </div>`);
+  }
 
   // ── 목표 ──
   if (a.goal) {
@@ -5587,18 +5660,28 @@ function renderEbgAnalysis(a) {
     const isPremium = /강남|프리미엄|고급|핵심/.test(locText);
     const isLarge   = /복합몰|대형|아울렛|몰/.test(locText);
 
-    let matched = Object.entries(STORES).filter(([name]) => {
-      if (!preferredAreas.length) return true;
-      return preferredAreas.some(area => name.includes(area) ||
-        (STORE_AREA_INFO[name] && (STORE_AREA_INFO[name].district || '').includes(area)));
-    });
+    // 다이소 브랜드 강제 추천 (시연용 5개 점포)
+    const brandName = ((a.brandName || '') + ' ' + (entry?.brand || '')).replace(/\s/g,'').toLowerCase();
+    const isDaiso = brandName.includes('다이소') || brandName.includes('daiso');
+    const DAISO_FORCED = ['NC청주점','NC중앙로역점','NC강서점','동아강북점','2001중계점'];
 
-    if (!matched.length || matched.length > 10) {
-      matched = Object.entries(STORES)
-        .filter(([, info]) => isPremium ? info.avg >= 80 : isLarge ? info.avg >= 60 : info.avg >= 50);
+    let matched;
+    if (isDaiso) {
+      matched = DAISO_FORCED.filter(n => STORES[n]).map(n => [n, STORES[n]]);
+    } else {
+      matched = Object.entries(STORES).filter(([name]) => {
+        if (!preferredAreas.length) return true;
+        return preferredAreas.some(area => name.includes(area) ||
+          (STORE_AREA_INFO[name] && (STORE_AREA_INFO[name].district || '').includes(area)));
+      });
+
+      if (!matched.length || matched.length > 10) {
+        matched = Object.entries(STORES)
+          .filter(([, info]) => isPremium ? info.avg >= 80 : isLarge ? info.avg >= 60 : info.avg >= 50);
+      }
+
+      matched = matched.sort((a, b) => b[1].avg - a[1].avg).slice(0, 5);
     }
-
-    matched = matched.sort((a, b) => b[1].avg - a[1].avg).slice(0, 5);
 
     if (matched.length) {
       // 선호지역 매칭 여부로 분리
@@ -5650,28 +5733,38 @@ function renderEbgAnalysis(a) {
 
       let storeHTML = '';
 
-      if (preferred.length) {
-        storeHTML += `
-          <div style="font-size:9px;font-weight:800;color:var(--green);letter-spacing:.1em;
+      if (isDaiso) {
+        storeHTML = `
+          <div style="font-size:9px;font-weight:800;color:#E60012;letter-spacing:.1em;
             text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:6px">
-            <span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block"></span>
-            EBG 선호지역 매칭 (${preferred.length}개)
+            <span style="width:6px;height:6px;border-radius:50%;background:#E60012;display:inline-block"></span>
+            다이소 입점 추천 점포 (${withReason.length}개)
           </div>
-          ${preferred.map(renderCard).join('')}`;
-      }
+          ${withReason.map(renderCard).join('')}`;
+      } else {
+        if (preferred.length) {
+          storeHTML += `
+            <div style="font-size:9px;font-weight:800;color:var(--green);letter-spacing:.1em;
+              text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:6px">
+              <span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block"></span>
+              EBG 선호지역 매칭 (${preferred.length}개)
+            </div>
+            ${preferred.map(renderCard).join('')}`;
+        }
 
-      if (others.length) {
-        storeHTML += `
-          <div style="font-size:9px;font-weight:800;color:var(--text-dim);letter-spacing:.1em;
-            text-transform:uppercase;margin:${preferred.length?'14px':0} 0 6px;display:flex;align-items:center;gap:6px">
-            <span style="width:6px;height:6px;border-radius:50%;background:var(--text-dim);display:inline-block"></span>
-            상권지수 기반 추천 (${others.length}개)
-          </div>
-          ${others.map(renderCard).join('')}`;
+        if (others.length) {
+          storeHTML += `
+            <div style="font-size:9px;font-weight:800;color:var(--text-dim);letter-spacing:.1em;
+              text-transform:uppercase;margin:${preferred.length?'14px':0} 0 6px;display:flex;align-items:center;gap:6px">
+              <span style="width:6px;height:6px;border-radius:50%;background:var(--text-dim);display:inline-block"></span>
+              상권지수 기반 추천 (${others.length}개)
+            </div>
+            ${others.map(renderCard).join('')}`;
+        }
       }
 
       parts.push(`
-        <div style="font-size:9px;font-weight:800;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px">추천 입점 점포</div>
+        <div style="font-size:9px;font-weight:800;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase;margin:14px 0 10px">📍 추천 입점 점포</div>
         ${storeHTML}`);
     }
   }
@@ -5692,7 +5785,7 @@ async function reanalyzeEbg(id) {
     const r = await fetch('/api/ebg', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: entry.image, brand: entry.brand })
+      body: JSON.stringify({ images: entry.images || [entry.image], brand: entry.brand })
     });
     const data = await r.json();
     if (r.ok) analysis = data;

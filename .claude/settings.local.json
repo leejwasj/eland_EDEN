@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:docs.google.com)",
+      "WebFetch(domain:doc-04-6s-sheets.googleusercontent.com)",
+      "Bash(vercel --version)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(vercel env *)",
+      "Bash(vercel ls *)",
+      "Bash(vercel inspect *)",
+      "WebFetch(domain:md-scoring-deploy-jhbeltb5v-retail1.vercel.app)",
+      "Bash(vercel alias *)",
+      "Bash(supabase --version)"
+    ]
+  }
+}

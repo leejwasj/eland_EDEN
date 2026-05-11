@@ -6020,9 +6020,9 @@ async function generateCustomSlide(idx) {
     const refSummary = PPT_DATA.references.filter(r=>r.analysis)
       .map(r=>(r.analysis.keyInsights||[]).slice(0,2).join(' / ')).join(' | ');
 
-    const r = await fetch('/api/custom-slide', {
+    const r = await fetch('/api/ppt-strategy', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ title: cs.title, prompt: cs.prompt, brand, store, ebgContext, referenceSummary: refSummary })
+      body: JSON.stringify({ mode:'custom', title: cs.title, prompt: cs.prompt, brand, store, ebgContext, referenceSummary: refSummary })
     });
     const d = await r.json();
     if (d.error) throw new Error(d.error);

@@ -1427,16 +1427,8 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
           </label>
         </div>
 
-        <div class="fg" style="margin-bottom:16px">
-          <label class="fl">핵심 인사이트 <span style="color:var(--text-dim);font-weight:400">(선택)</span></label>
-          <textarea id="ebg-notes" rows="3" placeholder="주요 니즈, 관심 지역, 특이사항 등을 메모하세요"
-            style="width:100%;background:rgba(28,28,28,.9);border:1px solid var(--border);border-radius:var(--r);
-              padding:10px 12px;color:#fff;font-size:13px;resize:vertical;font-family:inherit;line-height:1.6;
-              box-sizing:border-box"></textarea>
-        </div>
-
-        <button class="btn" onclick="submitEbg()" style="width:100%">EBG 등록하기</button>
-        <div id="ebg-submit-msg" style="margin-top:8px;font-size:12px;text-align:center;color:var(--green);display:none"></div>
+        <button class="btn" id="ebg-submit-btn" onclick="submitEbg()" style="width:100%">EBG 등록 및 AI 분석</button>
+        <div id="ebg-submit-msg" style="margin-top:8px;font-size:12px;text-align:center;display:none"></div>
       </div>
 
       <!-- 필터 -->
@@ -1492,23 +1484,42 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
 
         <img class="ebg-detail-img" id="ebg-detail-img" src="" alt="EBG 이미지">
 
-        <div id="ebg-detail-notes-wrap" style="display:none;margin-top:14px;padding:12px 14px;
-          background:rgba(255,255,255,.03);border-radius:10px;border:1px solid var(--border)">
-          <div style="font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">핵심 인사이트</div>
-          <div id="ebg-detail-notes" style="font-size:13px;color:var(--text-sec);line-height:1.7;white-space:pre-wrap"></div>
+        <!-- AI 분석 결과 -->
+        <div id="ebg-analysis-wrap" style="margin-top:14px;display:none">
+          <!-- 요약 -->
+          <div style="padding:13px 15px;background:rgba(30,215,96,.05);border:1px solid rgba(30,215,96,.15);
+            border-radius:10px;margin-bottom:12px">
+            <div style="font-size:10px;font-weight:700;color:var(--green);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">AI 인사이트 요약</div>
+            <div id="ebg-detail-summary" style="font-size:13px;color:#ddd;line-height:1.72"></div>
+          </div>
+
+          <!-- 니즈 태그 -->
+          <div class="ebg-section-lbl">브랜드 니즈</div>
+          <div id="ebg-detail-tags" style="margin-bottom:12px"></div>
+
+          <!-- 메타 정보 grid -->
+          <div id="ebg-detail-meta-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"></div>
+
+          <!-- 키워드 -->
+          <div class="ebg-section-lbl">브랜드 키워드</div>
+          <div id="ebg-detail-keywords" style="margin-bottom:12px"></div>
+
+          <!-- 우려사항 -->
+          <div id="ebg-detail-concerns-wrap" style="display:none;padding:10px 13px;background:rgba(255,160,50,.06);
+            border:1px solid rgba(255,160,50,.2);border-radius:10px;margin-bottom:12px">
+            <div style="font-size:10px;font-weight:700;color:#FFA032;letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px">브랜드 측 우려사항</div>
+            <div id="ebg-detail-concerns" style="font-size:12px;color:var(--text-sec);line-height:1.6"></div>
+          </div>
+
+          <!-- 점포 유형 -->
+          <div class="ebg-section-lbl">추천 점포 유형</div>
+          <div id="ebg-detail-fit"></div>
         </div>
 
-        <!-- 분석 섹션 (준비 중) -->
-        <div class="ebg-section-lbl">니즈 태그 <span style="font-weight:400;color:var(--text-dim);text-transform:none;letter-spacing:0">(AI 분석 준비 중)</span></div>
-        <div id="ebg-detail-tags" style="margin-bottom:4px"></div>
-
-        <div class="ebg-section-lbl">점포 적합도 추천 <span style="font-weight:400;color:var(--text-dim);text-transform:none;letter-spacing:0">(분석 준비 중)</span></div>
-        <div id="ebg-detail-fit">
-          <div style="display:flex;align-items:center;gap:10px;padding:14px;background:rgba(30,215,96,.04);
-            border:1px dashed rgba(30,215,96,.2);border-radius:10px;color:var(--text-sec);font-size:13px">
-            <span style="font-size:20px">🔍</span>
-            EBG 이미지 분석 후 점포 적합도 자동 산출 예정
-          </div>
+        <!-- 분석 로딩 -->
+        <div id="ebg-analysis-loading" style="display:none;text-align:center;padding:24px;color:var(--text-sec);font-size:13px">
+          <div style="font-size:22px;margin-bottom:8px;animation:spin 1.2s linear infinite;display:inline-block">⟳</div><br>
+          AI가 EBG를 분석 중입니다…
         </div>
 
         <button onclick="deleteEbg()" style="margin-top:20px;width:100%;padding:10px;background:rgba(255,60,60,.08);
@@ -5089,22 +5100,40 @@ function ebgLoadFile(file) {
   reader.readAsDataURL(file);
 }
 
-function submitEbg() {
+async function submitEbg() {
   const brand = document.getElementById('ebg-brand').value.trim();
   const md = document.getElementById('ebg-md').value.trim();
   const date = document.getElementById('ebg-date').value;
-  const notes = document.getElementById('ebg-notes').value.trim();
-  const imgSrc = document.getElementById('ebg-preview-img').src;
-  const hasImg = document.getElementById('ebg-preview-img').style.display !== 'none' && imgSrc;
+  const imgEl = document.getElementById('ebg-preview-img');
+  const hasImg = imgEl.style.display !== 'none' && imgEl.src && imgEl.src.startsWith('data:');
 
   if (!brand) { alert('브랜드명을 입력해주세요'); return; }
   if (!md) { alert('MD 이름을 입력해주세요'); return; }
   if (!hasImg) { alert('EBG 이미지를 업로드해주세요'); return; }
 
+  const btn = document.getElementById('ebg-submit-btn');
+  const msg = document.getElementById('ebg-submit-msg');
+  btn.disabled = true;
+  btn.textContent = 'AI 분석 중…';
+  msg.style.color = 'var(--text-sec)';
+  msg.textContent = '이미지를 읽고 있습니다. 잠시만 기다려주세요.';
+  msg.style.display = 'block';
+
+  let analysis = null;
+  try {
+    const r = await fetch('/api/ebg', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: imgEl.src, brand })
+    });
+    if (r.ok) analysis = await r.json();
+  } catch (e) { /* 분석 실패해도 저장은 진행 */ }
+
   const entry = {
     id: Date.now().toString(),
-    brand, md, date, notes,
-    image: imgSrc,
+    brand, md, date,
+    image: imgEl.src,
+    analysis,
     createdAt: new Date().toISOString()
   };
 
@@ -5114,18 +5143,19 @@ function submitEbg() {
   // Reset form
   document.getElementById('ebg-brand').value = '';
   document.getElementById('ebg-md').value = '';
-  document.getElementById('ebg-notes').value = '';
-  document.getElementById('ebg-preview-img').style.display = 'none';
-  document.getElementById('ebg-preview-img').src = '';
+  imgEl.style.display = 'none';
+  imgEl.src = '';
   document.querySelector('.ebg-upload-icon').style.display = '';
   document.getElementById('ebg-file').value = '';
+  btn.disabled = false;
+  btn.textContent = 'EBG 등록 및 AI 분석';
 
-  const msg = document.getElementById('ebg-submit-msg');
-  msg.textContent = `✓ "${brand}" EBG가 등록되었습니다`;
-  msg.style.display = 'block';
-  setTimeout(() => { msg.style.display = 'none'; }, 3000);
+  msg.style.color = 'var(--green)';
+  msg.textContent = analysis ? `✓ "${brand}" 분석 완료` : `✓ "${brand}" 등록 완료 (분석 실패)`;
+  setTimeout(() => { msg.style.display = 'none'; }, 3500);
 
   renderEbgGallery();
+  selectEbg(entry.id);
 }
 
 function renderEbgGallery() {
@@ -5180,25 +5210,92 @@ function selectEbg(id) {
   const detail = document.getElementById('ebg-detail');
   detail.classList.add('on');
   document.getElementById('ebg-detail-brand').textContent = entry.brand;
-  document.getElementById('ebg-detail-meta').textContent =
+  document.getElementById('ebg-detail-meta').innerHTML =
     `${entry.md} MD &nbsp;·&nbsp; ${entry.date || '날짜 미기재'}`;
   document.getElementById('ebg-detail-img').src = entry.image || '';
 
-  const notesWrap = document.getElementById('ebg-detail-notes-wrap');
-  if (entry.notes) {
-    notesWrap.style.display = 'block';
-    document.getElementById('ebg-detail-notes').textContent = entry.notes;
+  const analysisWrap = document.getElementById('ebg-analysis-wrap');
+  const loadingEl = document.getElementById('ebg-analysis-loading');
+
+  if (entry.analysis) {
+    loadingEl.style.display = 'none';
+    analysisWrap.style.display = 'block';
+    renderEbgAnalysis(entry.analysis);
   } else {
-    notesWrap.style.display = 'none';
+    analysisWrap.style.display = 'none';
+    loadingEl.style.display = 'block';
+    loadingEl.innerHTML = '<div style="color:var(--text-dim);font-size:13px;padding:20px 0">분석 결과가 없습니다.</div>';
   }
 
-  // Placeholder needs tags
-  const cat = classifyBrand(entry.brand) || '미분류';
-  const tagSamples = ['입점 검토 중', '오프라인 확장 의향', cat];
-  document.getElementById('ebg-detail-tags').innerHTML =
-    tagSamples.map(t => `<span class="ebg-insight-tag">🏷 ${t}</span>`).join('');
-
   detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderEbgAnalysis(a) {
+  // 요약
+  document.getElementById('ebg-detail-summary').textContent = a.summary || '—';
+
+  // 니즈 태그
+  const tags = (a.needs || []);
+  document.getElementById('ebg-detail-tags').innerHTML = tags.length
+    ? tags.map(t => `<span class="ebg-insight-tag">🏷 ${t}</span>`).join('')
+    : '<span style="color:var(--text-dim);font-size:12px">확인된 니즈 없음</span>';
+
+  // 메타 그리드 (가격대 / 확장의향 / 선호조건)
+  const metaItems = [
+    a.priceRange    ? { lbl: '가격대',      val: a.priceRange,       icon: '💰' } : null,
+    a.expansionIntent ? { lbl: '오프라인 확장 의향', val: a.expansionIntent, icon: '📈' } : null,
+    a.storeType     ? { lbl: '추천 점포 유형', val: a.storeType,       icon: '🏬' } : null,
+  ].filter(Boolean);
+
+  document.getElementById('ebg-detail-meta-grid').innerHTML = metaItems.map(item => `
+    <div style="padding:10px 12px;background:var(--surface-3);border:1px solid var(--border);border-radius:10px">
+      <div style="font-size:10px;color:var(--text-dim);margin-bottom:3px">${item.icon} ${item.lbl}</div>
+      <div style="font-size:12px;font-weight:600;color:#fff">${item.val}</div>
+    </div>`).join('');
+
+  // 키워드
+  const kws = (a.keywords || []);
+  document.getElementById('ebg-detail-keywords').innerHTML = kws.length
+    ? kws.map(k => `<span style="display:inline-block;padding:4px 10px;margin:3px;border-radius:9999px;
+        font-size:11px;font-weight:600;background:rgba(83,213,242,.1);color:#53d5f2;
+        border:1px solid rgba(83,213,242,.2)"># ${k}</span>`).join('')
+    : '<span style="color:var(--text-dim);font-size:12px">—</span>';
+
+  // 우려사항
+  const concernsWrap = document.getElementById('ebg-detail-concerns-wrap');
+  if (a.concerns) {
+    concernsWrap.style.display = 'block';
+    document.getElementById('ebg-detail-concerns').textContent = a.concerns;
+  } else {
+    concernsWrap.style.display = 'none';
+  }
+
+  // 점포 유형 → 매칭 점포 추천 (STORES 기반 간단 매칭)
+  const fitEl = document.getElementById('ebg-detail-fit');
+  if (a.storeType && typeof STORES !== 'undefined') {
+    const isPremium = /강남|프리미엄|고급/.test(a.storeType);
+    const isLarge = /복합몰|대형|아울렛/.test(a.storeType);
+    const matched = Object.entries(STORES)
+      .filter(([name, info]) => {
+        if (isPremium) return info.avg >= 80;
+        if (isLarge)   return info.avg >= 60;
+        return true;
+      })
+      .sort((a, b) => b[1].avg - a[1].avg)
+      .slice(0, 4);
+
+    fitEl.innerHTML = matched.length ? matched.map(([name, info]) => `
+      <div class="ebg-fit-card">
+        <div class="ebg-fit-score">${info.avg}</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600;color:#fff">${name}</div>
+          <div style="font-size:11px;color:var(--text-sec);margin-top:2px">상권 지수 ${info.avg}점</div>
+        </div>
+      </div>`).join('')
+    : '<div style="color:var(--text-dim);font-size:13px">매칭 점포 없음</div>';
+  } else {
+    fitEl.innerHTML = '<div style="color:var(--text-dim);font-size:13px">점포 유형 정보 없음</div>';
+  }
 }
 
 function closeEbgDetail() {

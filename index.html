@@ -5870,212 +5870,234 @@ function toggleFloorPlan(id, checked) {
 
 // ── 다이소 샘플 덱 (시연용 · 임원 브리핑 다크 스타일) ──
 const _DR = '#E60012';
-const _BG = '#0b0c10', _CARD = '#14161f', _LIME = '#c2ff4d';
-const _BORD = 'rgba(255,255,255,.08)', _BORD_HI = 'rgba(194,255,77,.35)';
-const _TXT = '#f1f5f9', _DIM = '#6b7280';
-const _img = (w,h,q,sig) => `https://source.unsplash.com/${w}x${h}/?${q}&sig=${sig}`;
+const _BG = '#0a0b0f', _CARD = '#15171f', _LIME = '#c2ff4d';
+const _BORD = 'rgba(255,255,255,.08)', _BORD_HI = 'rgba(194,255,77,.4)';
+const _TXT = '#f1f5f9', _DIM = '#7c8493';
+
+// 그라데이션 헤더 (이미지 대신) — 위치/카테고리별 컬러 매핑
+const _grads = [
+  'linear-gradient(135deg,#7f1d1d 0%,#dc2626 60%,#fb923c 100%)',
+  'linear-gradient(135deg,#1e3a8a 0%,#2563eb 60%,#60a5fa 100%)',
+  'linear-gradient(135deg,#365314 0%,#65a30d 60%,#c2ff4d 100%)',
+  'linear-gradient(135deg,#4c1d95 0%,#7c3aed 60%,#c084fc 100%)',
+  'linear-gradient(135deg,#134e4a 0%,#0d9488 60%,#5eead4 100%)',
+];
+
+// 도시 실루엣 SVG 패턴 (장식용)
+const _skyline = `<svg viewBox="0 0 100 30" preserveAspectRatio="none" style="position:absolute;bottom:0;left:0;width:100%;height:55%;opacity:.18">
+  <path d="M0,30 L0,18 L6,18 L6,10 L12,10 L12,15 L18,15 L18,5 L24,5 L24,12 L30,12 L30,8 L36,8 L36,16 L42,16 L42,6 L48,6 L48,14 L54,14 L54,9 L60,9 L60,17 L66,17 L66,11 L72,11 L72,4 L78,4 L78,13 L84,13 L84,8 L90,8 L90,15 L96,15 L96,10 L100,10 L100,30 Z" fill="white"/>
+</svg>`;
 
 function _dHead(eye, title, accent) {
-  return `<div style="padding:8px 18px 7px;background:${_BG};border-bottom:1px solid ${_BORD};position:relative;flex-shrink:0">
-    <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${accent}"></div>
-    <div style="font-size:6px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:${accent};margin-bottom:2px">${eye}</div>
-    <div style="font-size:14px;font-weight:900;color:${_TXT};line-height:1.2">${title}</div>
+  return `<div style="padding:9px 20px 8px;background:${_BG};border-bottom:1px solid ${_BORD};position:relative;flex-shrink:0">
+    <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:${accent}"></div>
+    <div style="font-size:7px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:${accent};margin-bottom:3px">${eye}</div>
+    <div style="font-size:17px;font-weight:900;color:${_TXT};line-height:1.2;letter-spacing:-.3px">${title}</div>
   </div>`;
 }
 function _dFoot(t) {
-  return `<div style="font-size:5.5px;color:#374151;text-align:right;padding:3px 14px;background:${_BG}">${t}</div>`;
+  return `<div style="font-size:7px;color:#475569;text-align:right;padding:4px 16px;background:${_BG};font-weight:500">${t}</div>`;
+}
+function _gHead(label, gradIdx, height) {
+  return `<div style="position:relative;height:${height||60}px;background:${_grads[gradIdx%5]};overflow:hidden;flex-shrink:0">
+    ${_skyline}
+    <div style="position:absolute;bottom:7px;left:10px;right:10px;font-size:13px;font-weight:900;color:#fff;letter-spacing:-.3px;text-shadow:0 1px 3px rgba(0,0,0,.4)">${label}</div>
+  </div>`;
 }
 function _kpi(val, label, accent, highlight) {
-  return `<div style="background:${_CARD};border-radius:8px;padding:10px 12px;border:1px solid ${highlight?_BORD_HI:_BORD};display:flex;flex-direction:column;justify-content:center;flex:1">
-    <div style="font-size:22px;font-weight:900;color:${accent};line-height:1;letter-spacing:-1px">${val}</div>
-    <div style="font-size:6.5px;color:${_DIM};margin-top:4px;line-height:1.4">${label}</div>
+  return `<div style="background:${_CARD};border-radius:10px;padding:14px 16px;border:1px solid ${highlight?_BORD_HI:_BORD};display:flex;flex-direction:column;justify-content:center;flex:1;${highlight?`box-shadow:inset 0 0 0 1px ${_BORD_HI}`:''}">
+    <div style="font-size:32px;font-weight:900;color:${accent};line-height:1;letter-spacing:-1.5px">${val}</div>
+    <div style="font-size:10px;color:${_DIM};margin-top:6px;line-height:1.4;font-weight:500">${label}</div>
   </div>`;
 }
 
 function daisoS1() {
   const areas = [
-    { n:'청주 상권', kpi:'100만', kLabel:'광역 상권 인구', pts:['배후세대 5만','터미널 복합 입지','충북 유일 도심형'], img:_img(180,80,'shopping,mall,interior',101) },
-    { n:'발산 상권', kpi:'4.7만', kLabel:'일평균 방문객수', pts:['배후세대 3.4만','배후시장 60만 명','마곡 신흥 배후'], img:_img(180,80,'outdoor,mall,modern',102) },
-    { n:'중계 상권', kpi:'20만', kLabel:'배후 세대수', pts:['3040 핵심 고객','초밀착 도보 상권','항아리 구조'], img:_img(180,80,'apartment,complex,korea',103) },
-    { n:'중앙로역(대전)', kpi:'1020', kLabel:'핵심 타깃 고객층', pts:['으능정이 문화거리','원도심 재생 호재','SPA·스트릿 특화'], img:_img(180,80,'urban,street,night,korea',104) },
-    { n:'대곡칠곡(대구)', kpi:'25만', kLabel:'배후 인구', pts:['배후세대 10만','달성 유일 백화점','신규 아파트 유입'], img:_img(180,80,'department,store,exterior',105) },
+    { n:'청주 상권', kpi:'100만', kLabel:'광역 상권 인구', pts:['배후세대 5만 세대','터미널 복합 입지','충북 유일 도심형','일평균 객수 3.2만'] },
+    { n:'발산 상권', kpi:'4.7만', kLabel:'일평균 방문객수', pts:['배후세대 3.4만','배후시장 60만 명','마곡 신흥 배후','9호선 핵심 환승'] },
+    { n:'중계 상권', kpi:'20만', kLabel:'배후 세대수', pts:['3040 핵심 고객','초밀착 도보권','항아리 구조','월매출 검증 3억+'] },
+    { n:'중앙로역(대전)', kpi:'1020', kLabel:'핵심 타깃 세대', pts:['으능정이 문화거리','원도심 재생 호재','SPA·스트릿 특화','유동인구 일 8만'] },
+    { n:'대곡칠곡(대구)', kpi:'25만', kLabel:'배후 인구', pts:['배후세대 10만','달성 유일 백화점','신규 아파트 유입','지역 충성도 高'] },
   ];
-  return `<div class="ppt-slide" style="background:${_BG}">${_dHead('MARKET PROPOSAL · 01','출점 가능 상권 제안',_LIME)}
-  <div class="ppt-body" style="padding:6px 8px;display:grid;grid-template-columns:repeat(5,1fr);gap:5px;background:${_BG}">
-    ${areas.map((a,i)=>`<div style="background:${_CARD};border-radius:8px;overflow:hidden;border:1px solid ${i===2?_BORD_HI:_BORD};display:flex;flex-direction:column">
-      <div style="position:relative;height:50px;flex-shrink:0">
-        <img src="${a.img}" style="width:100%;height:100%;object-fit:cover;display:block">
-        <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(11,12,16,.2),rgba(11,12,16,.7))"></div>
-        <div style="position:absolute;bottom:5px;left:8px;font-size:8.5px;font-weight:900;color:#fff">${a.n}</div>
-      </div>
-      <div style="padding:7px 8px;flex:1;display:flex;flex-direction:column">
-        <div style="font-size:20px;font-weight:900;color:${_LIME};line-height:1;letter-spacing:-1px">${a.kpi}</div>
-        <div style="font-size:5.5px;color:${_DIM};margin-bottom:6px;margin-top:2px">${a.kLabel}</div>
-        ${a.pts.map(p=>`<div style="font-size:6px;color:#9ca3af;padding:2px 0;border-top:1px solid ${_BORD};line-height:1.4">${p}</div>`).join('')}
+  return `<div class="ppt-slide" style="background:${_BG}">${_dHead('MARKET PROPOSAL · 01','출점 가능 상권 제안 — 5개 타깃',_LIME)}
+  <div class="ppt-body" style="padding:8px 10px;display:grid;grid-template-columns:repeat(5,1fr);gap:7px;background:${_BG}">
+    ${areas.map((a,i)=>`<div style="background:${_CARD};border-radius:10px;overflow:hidden;border:1px solid ${i===2?_BORD_HI:_BORD};display:flex;flex-direction:column">
+      ${_gHead(a.n, i, 58)}
+      <div style="padding:10px 11px;flex:1;display:flex;flex-direction:column">
+        <div style="font-size:28px;font-weight:900;color:${_LIME};line-height:1;letter-spacing:-1.5px">${a.kpi}</div>
+        <div style="font-size:8.5px;color:${_DIM};margin-bottom:9px;margin-top:4px;font-weight:600">${a.kLabel}</div>
+        ${a.pts.map(p=>`<div style="font-size:9px;color:#c5cad4;padding:5px 0;border-top:1px solid ${_BORD};line-height:1.45;font-weight:500">${p}</div>`).join('')}
       </div>
     </div>`).join('')}
-  </div>${_dFoot('전략적 출점 타깃 5개 상권 — 상권 규모·집객력·경쟁 환경 종합 선정')}</div>`;
+  </div>${_dFoot('전략적 출점 타깃 5개 상권 · 규모·집객력·경쟁환경 종합 평가')}</div>`;
 }
 
 function daisoS2() {
   const st = [
-    { n:'NC청주점', score:'78', tag:'충북권 유일 도심형', pts:['광역 집객 100만 명','충북 최대 규모 입점 가능','주차 800대 인프라'], img:_img(180,80,'outlet,mall,entrance',201) },
-    { n:'NC강서점', score:'73', tag:'MZ 유입 급증', pts:['20대 +24% · 30대 +19%','리뉴얼 후 성장세 지속','마곡 신흥 배후 흡수'], img:_img(180,80,'fashion,mall,modern',202) },
-    { n:'2001중계점', score:'90', tag:'전국 최고 평당 효율', pts:['홈플러스 폐점 무빙 기회','항아리 상권 이탈 최소','식품관 연계 구매율 高'], img:_img(180,80,'superstore,retail,interior',203) },
-    { n:'NC중앙로역점', score:'81', tag:'원도심 재생 수혜', pts:['기존 검증 상권(월 3억)','620평 대형 이동 가능','20·30대 집중 상권'], img:_img(180,80,'underground,station,shopping',204) },
-    { n:'동아백화점 강북', score:'77', tag:'항아리 충성 상권', pts:['외부이탈 最低 구조','인샵 600평 확보 가능','지역 신뢰도 기반 정착'], img:_img(180,80,'department,luxury,store',205) },
+    { n:'NC청주점', score:78, tag:'충북권 유일 도심형', pts:['광역 집객 100만 명','충북 최대 800평 가능','주차 800대 인프라','월 매출 25억 예상'] },
+    { n:'NC강서점', score:73, tag:'MZ 유입 급증세', pts:['20대 +24%, 30대 +19%','리뉴얼 후 성장세','마곡 신흥 배후 흡수','외식 8·9층 연계'] },
+    { n:'2001중계점', score:90, tag:'전국 최고 평당 효율', pts:['홈플 폐점 무빙 기회','항아리 상권 이탈 최소','식품관 연계율 高','즉시 이전 가능 구조'] },
+    { n:'NC중앙로역점', score:81, tag:'원도심 재생 수혜', pts:['기존 검증 월 3억','620평 대형 확장','20·30대 집중 상권','지하1→상층 이동 가능'] },
+    { n:'동아백화점 강북', score:77, tag:'항아리 충성 상권', pts:['외부이탈 最低','인샵 600평 확보','지역 신뢰도 기반','로드샵 비효율 흡수'] },
   ];
-  return `<div class="ppt-slide" style="background:${_BG}">${_dHead('STORE PROPOSAL · 02','자사 지점 제안',_DR)}
-  <div class="ppt-body" style="padding:6px 8px;display:grid;grid-template-columns:repeat(5,1fr);gap:5px;background:${_BG}">
-    ${st.map((s,i)=>`<div style="background:${_CARD};border-radius:8px;overflow:hidden;border:1px solid ${s.score==='90'?_BORD_HI:_BORD};display:flex;flex-direction:column">
-      <div style="position:relative;height:50px;flex-shrink:0">
-        <img src="${s.img}" style="width:100%;height:100%;object-fit:cover;display:block">
-        <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(11,12,16,.1),rgba(11,12,16,.75))"></div>
-        <div style="position:absolute;top:5px;right:7px;background:${s.score==='90'?_LIME:'rgba(255,255,255,.15)'};color:${s.score==='90'?'#000':'#fff'};font-size:7px;font-weight:900;padding:2px 5px;border-radius:4px">${s.score}점</div>
-        <div style="position:absolute;bottom:5px;left:8px;font-size:8px;font-weight:900;color:#fff">${s.n}</div>
+  return `<div class="ppt-slide" style="background:${_BG}">${_dHead('STORE PROPOSAL · 02','자사 지점 제안 — 5개 최적 매장',_DR)}
+  <div class="ppt-body" style="padding:8px 10px;display:grid;grid-template-columns:repeat(5,1fr);gap:7px;background:${_BG}">
+    ${st.map((s,i)=>`<div style="background:${_CARD};border-radius:10px;overflow:hidden;border:1px solid ${s.score===90?_BORD_HI:_BORD};display:flex;flex-direction:column">
+      <div style="position:relative;height:58px;background:${_grads[i%5]};overflow:hidden;flex-shrink:0">
+        ${_skyline}
+        <div style="position:absolute;top:6px;right:8px;background:${s.score===90?_LIME:'rgba(0,0,0,.5)'};color:${s.score===90?'#000':'#fff'};font-size:10px;font-weight:900;padding:3px 8px;border-radius:5px;letter-spacing:-.3px">${s.score}점</div>
+        <div style="position:absolute;bottom:7px;left:10px;right:10px;font-size:12px;font-weight:900;color:#fff;letter-spacing:-.3px;text-shadow:0 1px 3px rgba(0,0,0,.4)">${s.n}</div>
       </div>
-      <div style="padding:7px 8px;flex:1">
-        <div style="font-size:6px;color:${_DR};font-weight:700;margin-bottom:5px">${s.tag}</div>
-        ${s.pts.map(p=>`<div style="font-size:6px;color:#9ca3af;padding:2px 0;border-top:1px solid ${_BORD};line-height:1.4">${p}</div>`).join('')}
+      <div style="padding:9px 11px;flex:1;display:flex;flex-direction:column">
+        <div style="font-size:9px;color:${s.score===90?_LIME:_DR};font-weight:700;margin-bottom:8px;letter-spacing:-.2px">${s.tag}</div>
+        ${s.pts.map(p=>`<div style="font-size:8.5px;color:#c5cad4;padding:5px 0;border-top:1px solid ${_BORD};line-height:1.5;font-weight:500">${p}</div>`).join('')}
       </div>
     </div>`).join('')}
-  </div>${_dFoot('이랜드리테일 5개 최적 지점 — 상권 적합도 기반 선정')}</div>`;
+  </div>${_dFoot('이랜드리테일 5개 최적 지점 · 상권 적합도 기반 선정')}</div>`;
 }
 
 function daisoS3() {
   const bars = [{yr:'2022',v:2542,p:.508},{yr:'2023',v:3200,p:.64},{yr:'2024',v:3969,p:.794},{yr:'2025',v:4536,p:.907},{yr:'2026E',v:5000,p:1,est:true}];
   return `<div class="ppt-slide" style="background:${_BG}">${_dHead("BRAND ANALYSIS · 03","브랜드 현황 분석 — DAISO",_LIME)}
-  <div class="ppt-body" style="padding:6px 10px;background:${_BG};display:flex;flex-direction:column;gap:6px">
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+  <div class="ppt-body" style="padding:10px 14px;background:${_BG};display:flex;flex-direction:column;gap:9px">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
       ${_kpi('4.5조','2025 연매출',_LIME,true)}
       ${_kpi('+14.3%','매출 성장률 (YoY)','#22c55e',false)}
       ${_kpi('4,424억','2025 영업이익','#60a5fa',false)}
       ${_kpi('1,600+','전국 매장 수',_DR,false)}
     </div>
-    <div style="flex:1;background:${_CARD};border-radius:8px;border:1px solid ${_BORD};padding:8px 12px;display:flex;flex-direction:column">
-      <div style="font-size:6px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:${_DIM};margin-bottom:6px">연매출 추이</div>
-      <div style="flex:1;display:flex;align-items:flex-end;gap:8px;padding-bottom:14px;position:relative">
+    <div style="flex:1;background:${_CARD};border-radius:10px;border:1px solid ${_BORD};padding:11px 14px;display:flex;flex-direction:column;min-height:0">
+      <div style="font-size:9px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;color:${_DIM};margin-bottom:8px">연매출 추이 (조 원)</div>
+      <div style="flex:1;display:flex;align-items:flex-end;gap:12px;padding-bottom:18px;position:relative">
         ${bars.map(b=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%">
-          <div style="font-size:6.5px;font-weight:700;color:${b.est?_DIM:_LIME};margin-bottom:3px">${(b.v/1000).toFixed(1)}조</div>
-          <div style="width:100%;background:${b.est?'rgba(194,255,77,.25)':_LIME};border-radius:3px 3px 0 0;height:${Math.round(b.p*72)}px;opacity:${b.est?.6:1}"></div>
-          <div style="position:absolute;bottom:0;font-size:6px;color:${_DIM};font-weight:600">${b.yr}</div>
+          <div style="font-size:10px;font-weight:800;color:${b.est?_DIM:_LIME};margin-bottom:5px;letter-spacing:-.3px">${(b.v/1000).toFixed(1)}조</div>
+          <div style="width:100%;background:${b.est?'rgba(194,255,77,.25)':_LIME};border-radius:4px 4px 0 0;height:${Math.round(b.p*100)}px;opacity:${b.est?.55:1};box-shadow:${b.est?'none':'0 0 16px rgba(194,255,77,.3)'}"></div>
+          <div style="position:absolute;bottom:0;font-size:9px;color:${_DIM};font-weight:700">${b.yr}</div>
         </div>`).join('')}
       </div>
     </div>
-    <div style="background:${_CARD};border-radius:8px;border:1px solid ${_BORD};padding:8px 12px;flex-shrink:0">
-      <div style="font-size:6.5px;color:#9ca3af;line-height:1.7"><span style="color:${_TXT};font-weight:700">브랜드 요약:</span> 균일가 생활용품 전문 유통사로 고물가 수혜 최대 수혜 브랜드. 뷰티·이너웨어·홈웨어 카테고리 확장으로 MZ 고객 급증 중. 2026년 5조 클럽 진입 확실시되며 영업이익률 <span style="color:${_LIME};font-weight:700">9.7%</span> 유지 — 이랜드리테일 인샵 파트너로 최적 조건.</div>
+    <div style="background:${_CARD};border-radius:10px;border:1px solid ${_BORD};padding:10px 14px;flex-shrink:0;border-left:3px solid ${_LIME}">
+      <div style="font-size:9.5px;color:#c5cad4;line-height:1.7;font-weight:500"><span style="color:${_LIME};font-weight:800">EXECUTIVE SUMMARY</span> · 균일가 생활용품 1위 사업자 · 고물가 최대 수혜 브랜드 · 뷰티/이너웨어 카테고리 확장으로 MZ 고객 급증 · 2026년 <span style="color:${_LIME};font-weight:800">5조 클럽 진입 확실</span> · 영업이익률 <span style="color:${_LIME};font-weight:800">9.7%</span> 유지 — 이랜드리테일 인샵 파트너로 최적 조건.</div>
     </div>
   </div>${_dFoot('고물가 시대 가성비 무기로 역대 최대 실적 경신 중')}</div>`;
 }
 
 function daisoS4() {
   const now = [
-    ['뷰티 성지화','헤어·스킨케어 300+ 확장 — 10·20대 집객 핵심 채널 부상'],
-    ['객단가 상승','5천원+ 상품 비중 15% 확대, 프리미엄 균일가 전략'],
-    ['옴니채널','자사몰·익일배송·클릭앤콜렉트 동시 강화'],
-    ['IP 콜라보','무신사·올리브영·디즈니 협업으로 MZ 화제성 확보'],
+    ['뷰티 카테고리 성지화','헤어·스킨케어 300+ 라인 확장, 10·20대 방문 +34%'],
+    ['객단가 상승 전략','5천원 이상 비중 10%→15%, 프리미엄 균일가 확대'],
+    ['옴니채널 고도화','자사몰·익일배송·클릭앤콜렉트 100개 점포 도입'],
+    ['IP 콜라보 공세','무신사·올리브영·디즈니 협업으로 MZ 화제성 확보'],
   ];
   const fut = [
-    ['5조 안착','뷰티·키친·펫 전문성 강화로 단가 상승 견인'],
-    ['해외 확장','동남아(베트남·태국) 직진출 + 면세점 입점 검토'],
-    ['플래그십 전환','도심 1,000평+ 대형 체험형 매장으로 리포지셔닝'],
+    ['5조 클럽 안착','뷰티·키친·펫 전문성 강화로 단가 상승 견인'],
+    ['글로벌 확장','동남아(베트남·태국) 직진출 + 면세점 입점 검토'],
+    ['플래그십 전환','도심 거점 1,000평+ 대형 체험형 매장 리포지셔닝'],
     ['물류 효율화','부산 물류센터 가동 → 배송비 절감·재고 효율 30%↑'],
   ];
-  const col = (items, accent) => items.map(([t,d],i)=>`<div style="background:${_CARD};border-radius:7px;padding:8px 11px;border:1px solid ${_BORD};border-left:2px solid ${accent}">
-    <div style="font-size:8px;font-weight:800;color:${_TXT};margin-bottom:2px">${t}</div>
-    <div style="font-size:6.5px;color:${_DIM};line-height:1.55">${d}</div>
-  </div>`).join('');
-  return `<div class="ppt-slide" style="background:${_BG}">${_dHead('BRAND STRATEGY · 04','전개 현황 & 향후 전략',_LIME)}
-  <div class="ppt-body" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:6px 12px;background:${_BG}">
-    <div style="display:flex;flex-direction:column;gap:5px">
-      <div style="font-size:6px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:${_DR};margin-bottom:3px">현재 전개 수준</div>
-      ${col(now,_DR)}
+  const col = (items, accent, nums) => items.map(([t,d],i)=>`<div style="background:${_CARD};border-radius:9px;padding:11px 14px;border:1px solid ${_BORD};border-left:3px solid ${accent};flex:1;display:flex;align-items:center;gap:12px">
+    <div style="font-size:22px;font-weight:900;color:${accent};line-height:1;flex-shrink:0;opacity:.85">${nums?'0'+(i+1):'·'}</div>
+    <div style="flex:1">
+      <div style="font-size:11px;font-weight:800;color:${_TXT};margin-bottom:2px;letter-spacing:-.2px">${t}</div>
+      <div style="font-size:8.5px;color:${_DIM};line-height:1.5;font-weight:500">${d}</div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:5px">
-      <div style="font-size:6px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:${_LIME};margin-bottom:3px">향후 전략 방향</div>
-      ${col(fut,_LIME)}
+  </div>`).join('');
+  return `<div class="ppt-slide" style="background:${_BG}">${_dHead('BRAND STRATEGY · 04','전개 현황 & 향후 전략 로드맵',_LIME)}
+  <div class="ppt-body" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:9px 14px;background:${_BG}">
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="font-size:9px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;color:${_DR};margin-bottom:3px;display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:18px;height:2px;background:${_DR}"></span>현재 전개 수준</div>
+      ${col(now,_DR,true)}
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="font-size:9px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;color:${_LIME};margin-bottom:3px;display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:18px;height:2px;background:${_LIME}"></span>향후 전략 방향</div>
+      ${col(fut,_LIME,true)}
     </div>
   </div>${_dFoot('카테고리 혁신 + 물류 고도화로 지속 성장 기반 구축 중')}</div>`;
 }
 
 function daisoNews() {
   const fallback = [
-    { title:'다이소 뷰티, 올리브영 잡는다 — 10·20대 방문 전년比 34% 급증', source:'이데일리', date:'2025.04' },
-    { title:'연매출 4.5조 돌파, 5조 클럽 진입 초읽기 — 영업이익 4,424억', source:'매일경제', date:'2025.03' },
-    { title:'부산 물류센터 가동 — 전국 익일배송·재고 효율 30% 향상', source:'한국경제', date:'2025.02' },
-    { title:'고물가 시대 가성비 왕 다이소, MZ세대 집객 1순위 채널 등극', source:'조선비즈', date:'2025.01' },
+    { title:'다이소 뷰티, 올리브영 잡는다 — 10·20대 방문 전년比 34% 급증', source:'이데일리', date:'2025.04', excerpt:'헤어·스킨케어 라인 300종 돌파, MZ세대 핵심 채널 부상' },
+    { title:'연매출 4.5조 돌파, 5조 클럽 진입 초읽기', source:'매일경제', date:'2025.03', excerpt:'영업이익 4,424억 원 · 영업이익률 9.7% 안정적 유지' },
+    { title:'부산 물류센터 가동, 전국 익일배송 체계 구축', source:'한국경제', date:'2025.02', excerpt:'재고 효율 30% 향상 · 배송비 절감으로 가격경쟁력 강화' },
+    { title:'고물가 가성비 왕 다이소, MZ 집객 1순위', source:'조선비즈', date:'2025.01', excerpt:'균일가 전략 + IP 콜라보로 트렌드 채널 등극' },
   ];
-  const items = (PPT_DATA.news && PPT_DATA.news.length) ? PPT_DATA.news.slice(0,4) : fallback;
+  const items = (PPT_DATA.news && PPT_DATA.news.length) ? PPT_DATA.news.slice(0,4).map(n=>({...n,excerpt:n.excerpt||''})) : fallback;
   const accents = [_DR, _LIME, '#60a5fa', '#f59e0b'];
-  const newsImgs = [_img(400,100,'retail,variety,store',401),_img(400,100,'shopping,revenue,growth',402),_img(400,100,'logistics,warehouse,delivery',403),_img(400,100,'discount,store,consumer',404)];
-  return `<div class="ppt-slide" style="background:${_BG}">${_dHead('BRAND ISSUE · 05','최근 이슈 & 뉴스',_LIME)}
-  <div class="ppt-body" style="padding:6px 10px;display:flex;flex-direction:column;gap:6px;background:${_BG}">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;flex:1">
-      ${items.map((n,i)=>`<div style="background:${_CARD};border-radius:8px;overflow:hidden;border:1px solid ${_BORD};display:flex;flex-direction:column">
-        <div style="position:relative;height:44px;flex-shrink:0">
-          <img src="${newsImgs[i]}" style="width:100%;height:100%;object-fit:cover;display:block">
-          <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(11,12,16,.2),rgba(11,12,16,.7))"></div>
-          <span style="position:absolute;top:5px;left:7px;font-size:5.5px;font-weight:800;color:#000;background:${accents[i]};padding:1px 6px;border-radius:3px">${n.source||'뉴스'}</span>
-          <span style="position:absolute;bottom:5px;right:8px;font-size:5px;color:rgba(255,255,255,.5)">${n.date||''}</span>
+  return `<div class="ppt-slide" style="background:${_BG}">${_dHead('BRAND ISSUE · 05','최근 이슈 & 뉴스 — AI 자동 수집',_LIME)}
+  <div class="ppt-body" style="padding:9px 12px;display:flex;flex-direction:column;gap:8px;background:${_BG}">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1">
+      ${items.map((n,i)=>`<div style="background:${_CARD};border-radius:10px;overflow:hidden;border:1px solid ${_BORD};display:flex;flex-direction:column">
+        <div style="position:relative;height:50px;background:${_grads[i%5]};overflow:hidden;flex-shrink:0">
+          ${_skyline}
+          <div style="position:absolute;top:7px;left:9px;display:flex;align-items:center;gap:6px">
+            <span style="font-size:8.5px;font-weight:900;color:#000;background:${accents[i]};padding:2px 7px;border-radius:4px;letter-spacing:-.2px">${n.source||'뉴스'}</span>
+            <span style="font-size:8px;color:rgba(255,255,255,.85);font-weight:600">${n.date||''}</span>
+          </div>
         </div>
-        <div style="padding:7px 10px;flex:1;display:flex;align-items:center">
-          <div style="font-size:7.5px;font-weight:700;color:${_TXT};line-height:1.55">${n.title||''}</div>
+        <div style="padding:9px 12px;flex:1;display:flex;flex-direction:column;justify-content:center;gap:3px">
+          <div style="font-size:10px;font-weight:800;color:${_TXT};line-height:1.45;letter-spacing:-.2px">${n.title||''}</div>
+          ${n.excerpt?`<div style="font-size:8px;color:${_DIM};line-height:1.5;font-weight:500">${n.excerpt}</div>`:''}
         </div>
       </div>`).join('')}
     </div>
-    <div style="background:${_CARD};border-radius:8px;padding:8px 14px;border:1px solid ${_BORD_HI};flex-shrink:0">
-      <div style="font-size:6.5px;font-weight:800;color:${_LIME};margin-bottom:3px;letter-spacing:.5px">MD 전략 시사점</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div style="font-size:6.5px;color:#9ca3af;line-height:1.6;padding-left:8px;border-left:2px solid ${_DR}">뷰티·생활용품 카테고리 확장 흐름 → 이랜드리테일 인샵 입점 시 MZ 트렌드 시너지 극대화</div>
-        <div style="font-size:6.5px;color:#9ca3af;line-height:1.6;padding-left:8px;border-left:2px solid ${_LIME}">균일가 전략 + 물류 고도화 → 재고 안정·회전율 개선·객단가 상승 구조 동시 확인</div>
+    <div style="background:${_CARD};border-radius:10px;padding:11px 16px;border:1px solid ${_BORD_HI};flex-shrink:0;border-left:3px solid ${_LIME}">
+      <div style="font-size:9px;font-weight:800;color:${_LIME};margin-bottom:6px;letter-spacing:1.5px;text-transform:uppercase">MD 전략 시사점</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div style="font-size:9px;color:#c5cad4;line-height:1.6;font-weight:500;padding-left:10px;border-left:2px solid ${_DR}">뷰티·생활용품 카테고리 확장 흐름 → 이랜드리테일 인샵 입점 시 MZ 트렌드 시너지 극대화</div>
+        <div style="font-size:9px;color:#c5cad4;line-height:1.6;font-weight:500;padding-left:10px;border-left:2px solid ${_LIME}">균일가 전략 + 물류 고도화 → 재고 안정·회전율 개선·객단가 상승 구조 동시 확인</div>
       </div>
     </div>
-  </div>${_dFoot('Claude AI 자동 수집 최신 이슈 — MD 전략 수립 참고용')}</div>`;
+  </div>${_dFoot('Claude AI 자동 수집 최신 이슈 · MD 전략 수립 참고용')}</div>`;
 }
 
-function _dProposal(num, name, score, benefits, summary, imgKeyword) {
+function _dProposal(num, name, score, benefits, summary, gradIdx) {
   const isTop = score >= 85;
   const scoreColor = isTop ? _LIME : score>=70 ? '#60a5fa' : _DIM;
   const accent = num%2===1 ? _DR : _LIME;
   const circ = 87.96, dash = score/100*circ;
-  const imgUrl = _img(400,120,imgKeyword||'mall,interior,shopping',500+num);
+  const benefitColors = [_LIME, '#60a5fa', '#f59e0b'];
   return `<div class="ppt-slide" style="background:${_BG}">${_dHead(`ENTRY PROPOSAL · 0${num}`,`입점 제안 — ${name}`,accent)}
-  <div class="ppt-body" style="display:grid;grid-template-columns:140px 1fr;gap:8px;padding:6px 10px;background:${_BG}">
-    <div style="display:flex;flex-direction:column;gap:6px">
-      <div style="background:${_CARD};border-radius:8px;padding:8px;text-align:center;border:1px solid ${isTop?_BORD_HI:_BORD};display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0">
-        <div style="font-size:5.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${_DIM}">적합도 점수</div>
-        <div style="position:relative;width:76px;height:76px;margin:2px 0">
-          <svg viewBox="0 0 36 36" style="width:76px;height:76px;transform:rotate(-90deg)">
-            <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="3.5"/>
-            <circle cx="18" cy="18" r="14" fill="none" stroke="${scoreColor}" stroke-width="3.5"
+  <div class="ppt-body" style="display:grid;grid-template-columns:165px 1fr;gap:10px;padding:9px 12px;background:${_BG}">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="background:${_CARD};border-radius:10px;padding:12px 10px;text-align:center;border:1px solid ${isTop?_BORD_HI:_BORD};display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;${isTop?`box-shadow:0 0 24px rgba(194,255,77,.15)`:''}">
+        <div style="font-size:7.5px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:${_DIM}">적합도 점수</div>
+        <div style="position:relative;width:96px;height:96px;margin:3px 0">
+          <svg viewBox="0 0 36 36" style="width:96px;height:96px;transform:rotate(-90deg)">
+            <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="3"/>
+            <circle cx="18" cy="18" r="14" fill="none" stroke="${scoreColor}" stroke-width="3"
               stroke-dasharray="${dash.toFixed(1)} ${(circ-dash).toFixed(1)}" stroke-linecap="round"/>
           </svg>
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
-            <div style="font-size:24px;font-weight:900;color:${scoreColor};line-height:1">${score}</div>
-            <div style="font-size:5px;color:${_DIM}">/ 100</div>
+            <div style="font-size:34px;font-weight:900;color:${scoreColor};line-height:1;letter-spacing:-1.5px">${score}</div>
+            <div style="font-size:7px;color:${_DIM};font-weight:600">/ 100</div>
           </div>
         </div>
-        <div style="font-size:7.5px;font-weight:800;color:${_TXT};text-align:center">${name}</div>
-        ${isTop?`<div style="font-size:5.5px;background:${_LIME};color:#000;font-weight:800;padding:1px 8px;border-radius:3px;margin-top:2px">★ TOP PICK</div>`:''}
+        <div style="font-size:11px;font-weight:900;color:${_TXT};text-align:center;letter-spacing:-.2px">${name}</div>
+        ${isTop?`<div style="font-size:8px;background:${_LIME};color:#000;font-weight:900;padding:3px 10px;border-radius:4px;margin-top:2px;letter-spacing:.5px">★ TOP PICK</div>`:''}
       </div>
-      <div style="border-radius:8px;overflow:hidden;border:1px solid ${_BORD};flex:1;min-height:55px">
-        <img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;display:block">
+      <div style="border-radius:10px;overflow:hidden;border:1px solid ${_BORD};flex:1;min-height:60px;position:relative;background:${_grads[(gradIdx||num)%5]}">
+        ${_skyline}
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8px">
+          <div style="font-size:11px;font-weight:900;color:#fff;letter-spacing:-.2px;text-shadow:0 1px 4px rgba(0,0,0,.4)">${name}</div>
+          <div style="font-size:8px;color:rgba(255,255,255,.85);margin-top:3px;font-weight:600">제안 매장 위치</div>
+        </div>
       </div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:5px">
-      <div style="font-size:5.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:${_DIM}">입점 시 주요 혜택</div>
-      ${benefits.map((b,i)=>`<div style="background:${_CARD};border-radius:7px;padding:9px 12px;border:1px solid ${_BORD};border-left:2px solid ${[accent,'#60a5fa','#f59e0b'][i]};flex:1;display:flex;align-items:center;gap:10px">
-        <span style="font-size:18px;font-weight:900;color:${[accent,'#60a5fa','#f59e0b'][i]};flex-shrink:0;line-height:1;opacity:.9">${i+1}</span>
-        <span style="font-size:8px;color:#d1d5db;line-height:1.6">${b}</span>
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <div style="font-size:7.5px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:${_DIM}">입점 시 주요 혜택</div>
+      ${benefits.map((b,i)=>`<div style="background:${_CARD};border-radius:9px;padding:11px 14px;border:1px solid ${_BORD};border-left:3px solid ${benefitColors[i]};flex:1;display:flex;align-items:center;gap:14px">
+        <span style="font-size:30px;font-weight:900;color:${benefitColors[i]};flex-shrink:0;line-height:1;letter-spacing:-2px;opacity:.9">${i+1}</span>
+        <span style="font-size:10.5px;color:#dde2ea;line-height:1.55;font-weight:500;letter-spacing:-.2px">${b}</span>
       </div>`).join('')}
     </div>
   </div>${_dFoot(summary)}</div>`;
 }
-function daisoS5(){return _dProposal(5,'NC청주점',78,['100만 명 상권의 합리적 쇼핑 니즈 고객 독점','청주 최대 규모 인샵(최대 800평) 구현 가능','유통 인프라 활용 — 주차장·내점 고객 흡수'],'충북권 유일 도심형 아울렛 — 광역 집객력 기반 안정 매출','outlet,mall,korea');}
-function daisoS6(){return _dProposal(6,'NC강서점',73,['연매출 3,000억 점포 내점 고객 직접 흡수','유통 인프라(주차 800대)를 통한 객단가 상승','8·9층 외식 고객 연계 — 평일·주말 끊임없는 트래픽'],'리뉴얼 이후 20대+24% · 30대+19% 고객 성장세 지속','fashion,mall,modern');}
-function daisoS7(){return _dProposal(7,'2001중계점',90,['홈플러스 중계점 폐점 이슈 → 바로 옆 2001중계점으로 안정 무빙','동일 상권 무빙으로 안정적 매출 온보딩','전국 최고 수준 평당 효율 — 수익 매장 즉시 가능'],'적합도 90점 최고점 — 항아리 상권 + 즉시 이전 가능 구조','superstore,retail,interior');}
-function daisoS8(){return _dProposal(8,'NC중앙로역점',81,['지하1층 60평 → 상층부 대형 620평으로 이동 가능','기존 검증된 상권(월매출 3억) 기반으로 확장','중앙로역 유동인구와 다이소 고객 매칭 강도 높음'],'원도심 재생 + 신축 아파트 유입으로 상권 확장 진행 중','underground,shopping,center');}
-function daisoS9(){return _dProposal(9,'동아백화점 강북점',77,['인근 비효율 로드샵 → 인샵 대형 평수(600평)로 무빙 가능','유통 인프라(주차 500대)를 통한 객단가 상승','충성 고객 많은 항아리 상권 — 외부이탈 최소 구조'],'지역 브랜드 신뢰도 기반 신규 브랜드 정착 빠른 매장','department,store,building');}
+function daisoS5(){return _dProposal(5,'NC청주점',78,['100만 명 광역 상권의 합리적 쇼핑 니즈 독점','청주 최대 규모 인샵(최대 800평) 구현 가능','유통 인프라 활용 — 주차장·내점 고객 직흡수'],'충북권 유일 도심형 아울렛 · 광역 집객력 기반 안정 매출',0);}
+function daisoS6(){return _dProposal(6,'NC강서점',73,['연매출 3,000억 점포 내점 고객 직접 흡수','유통 인프라(주차 800대)를 통한 객단가 상승','8·9층 외식 고객 연계 — 평일/주말 끊임없는 트래픽'],'리뉴얼 이후 20대+24% · 30대+19% 고객 성장세 지속',1);}
+function daisoS7(){return _dProposal(7,'2001중계점',90,['홈플러스 중계점 폐점 → 바로 옆 2001중계점 안정 무빙','동일 상권 무빙으로 안정적 매출 온보딩','전국 최고 수준 평당 효율 — 수익 매장 즉시 가능'],'적합도 90점 최고점 · 항아리 상권 + 즉시 이전 가능 구조',2);}
+function daisoS8(){return _dProposal(8,'NC중앙로역점',81,['지하1층 60평 → 상층부 대형 620평으로 이동 가능','기존 검증된 상권(월매출 3억) 기반으로 확장','중앙로역 유동인구와 다이소 고객 매칭 강도 높음'],'원도심 재생 + 신축 아파트 유입으로 상권 확장 진행 중',3);}
+function daisoS9(){return _dProposal(9,'동아백화점 강북점',77,['인근 비효율 로드샵 → 인샵 대형 평수(600평)로 무빙','유통 인프라(주차 500대)를 통한 객단가 상승','충성 고객 많은 항아리 상권 — 외부이탈 최소 구조'],'지역 브랜드 신뢰도 기반 신규 브랜드 정착 빠른 매장',4);}
 const DAISO_BUILDERS = [
   {fn:daisoS1,label:'상권 제안'},{fn:daisoS2,label:'지점 제안'},
   {fn:daisoS3,label:'브랜드 분석①'},{fn:daisoS4,label:'브랜드 분석②'},

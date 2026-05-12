@@ -4796,6 +4796,16 @@ function renderAreaDemoPanel(storeName, seoulPop, density) {
     <div style="margin-top:10px;font-size:10px;color:var(--text-dim);text-align:right">
       ${hasReal ? '서울시 생활인구 Open API' : '통계청·행정안전부 기반 추정'} · ${info.city} 지역 기준
     </div>
+
+    ${SGIS_DATA[storeName] ? `
+      <div style="margin-top:16px;padding-top:16px;border-top:1px dashed rgba(255,255,255,.08)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <span style="font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#53d5f2">📊 통계청 SGIS 정밀 데이터</span>
+          <span style="font-size:10px;color:var(--text-dim)">인구주택총조사 + 국세청 소득자료 통합</span>
+        </div>
+        ${renderSgisPanel(storeName)}
+      </div>
+    ` : ''}
   `;
 
   // 애니메이션: 약간 지연 후 바 채우기

@@ -540,9 +540,11 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
 .ppt-layout{display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start}
 @media(max-width:900px){.ppt-layout{grid-template-columns:1fr}}
 .ppt-step-label{font-size:10px;font-weight:800;color:var(--green);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
-.dart-upload-zone{border:1.5px dashed var(--border-mid);border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:border-color .15s;background:var(--surface-2)}
+.dart-upload-zone{border:1.5px dashed var(--border-mid);border-radius:8px;padding:24px 20px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;background:var(--surface-2)}
 .dart-upload-zone:hover,.dart-upload-zone.over{border-color:var(--green);background:rgba(30,215,96,.04)}
 .dart-upload-zone input{display:none}
+.dart-tab-layout{display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start}
+@media(max-width:900px){.dart-tab-layout{grid-template-columns:1fr}}
 .ppt-news-list-box{max-height:190px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--surface-2)}
 .ppt-news-row{padding:7px 0;border-bottom:1px solid var(--border);font-size:11px;color:var(--text-sec);line-height:1.5}
 .ppt-news-row:last-child{border-bottom:none}
@@ -776,6 +778,7 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
   <button class="nb" onclick="goTab(7)" style="display:none">온라인 베스트</button>
   <button class="nb" onclick="goTab(8)">키맨 EBG</button>
   <button class="nb" onclick="goTab(9)">전략 PPT</button>
+  <button class="nb" onclick="goTab(10)">DART 분석</button>
 </nav>
 
 <main class="main">
@@ -1594,31 +1597,24 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
         </div>
       </details>
 
-      <!-- DART 공시 파일 (베타) -->
-      <details class="panel" id="dart-panel">
-        <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between">
-          <span style="font-size:11px;font-weight:700;color:var(--text-sec);text-transform:uppercase;letter-spacing:1.2px">DART 공시 파일
-            <span style="display:inline-block;margin-left:6px;padding:1px 6px;border-radius:99px;background:#7c3aed;color:#fff;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;vertical-align:middle">Beta</span>
-            <span style="color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0;font-size:10px"> (PDF 또는 이미지)</span>
-          </span>
-          <span style="font-size:10px;color:var(--text-dim)">▾ 펼치기</span>
-        </summary>
-        <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
-          <div class="dart-upload-zone" id="dart-zone"
-            onclick="document.getElementById('dart-file').click()"
-            ondragover="event.preventDefault();this.classList.add('over')"
-            ondragleave="this.classList.remove('over')"
-            ondrop="onDartDrop(event)">
-            <input type="file" id="dart-file" accept=".pdf,image/*" onchange="onDartFileChange(event)">
-            <div id="dart-zone-inner">
-              <div style="font-size:28px;margin-bottom:6px;opacity:.4">📄</div>
-              <div style="font-size:12px;color:var(--text-sec)">클릭 또는 드래그로 DART 파일 업로드</div>
-              <div style="font-size:10px;color:var(--text-dim);margin-top:4px">PDF · JPG · PNG 지원</div>
-            </div>
+      <!-- DART 공시 연동 상태 -->
+      <div class="panel" id="dart-ppt-link" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;gap:12px">
+        <div style="min-width:0">
+          <div style="font-size:11px;font-weight:700;color:var(--text-sec);text-transform:uppercase;letter-spacing:1.2px;display:flex;align-items:center;gap:6px">
+            DART 공시 분석
+            <span style="padding:1px 6px;border-radius:99px;background:#7c3aed;color:#fff;font-size:9px;font-weight:700;letter-spacing:.5px">Beta</span>
           </div>
-          <div id="dart-status" style="display:none;margin-top:6px;font-size:11px;color:var(--green)"></div>
+          <div id="dart-ppt-status-txt" style="font-size:11px;color:var(--text-dim);margin-top:3px">
+            DART 탭에서 공시 파일을 분석하면 PPT에 자동 반영됩니다
+          </div>
         </div>
-      </details>
+        <button onclick="goTab(10)"
+          style="flex-shrink:0;padding:6px 14px;border-radius:9999px;border:1px solid var(--border-mid);background:transparent;color:var(--text-sec);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap"
+          onmouseover="this.style.borderColor='var(--green)';this.style.color='#fff'"
+          onmouseout="this.style.borderColor='var(--border-mid)';this.style.color='var(--text-sec)'">
+          DART 탭 →
+        </button>
+      </div>
 
       <!-- 도면 관리 (관리자) -->
       <details class="panel" id="floor-admin-panel">
@@ -1683,6 +1679,63 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
             .pptx 다운로드
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TAB 10: DART 공시 분석 -->
+<section class="tsec" id="tab-dart">
+  <div class="tab-hero">
+    <div class="tab-hero-eye">DART 공시 분석</div>
+    <h1 class="tab-hero-h">공시 문서를<br><span class="hl">AI로 즉시 분석</span>합니다</h1>
+    <p class="tab-hero-p">사업보고서·반기보고서 등 DART 공시 PDF를 업로드하면 재무 현황, 주요 리스크, 성장 포인트를 자동 추출합니다. 분석 결과는 전략 PPT에 자동 반영됩니다.</p>
+  </div>
+
+  <div class="dart-tab-layout">
+    <!-- 왼쪽: 업로드 -->
+    <div>
+      <div class="panel">
+        <div class="ph">파일 업로드</div>
+        <div class="fg" style="margin-bottom:12px">
+          <label>브랜드명 <span style="color:var(--text-dim);font-weight:400;text-transform:none;letter-spacing:0">(선택)</span></label>
+          <input id="dart-brand" type="text" placeholder="예) 다이소" autocomplete="off">
+        </div>
+        <div class="dart-upload-zone" id="dart-zone"
+          onclick="document.getElementById('dart-file').click()"
+          ondragover="event.preventDefault();this.classList.add('over')"
+          ondragleave="this.classList.remove('over')"
+          ondrop="onDartDrop(event)">
+          <input type="file" id="dart-file" accept=".pdf,image/*" onchange="onDartFileChange(event)">
+          <div id="dart-zone-inner">
+            <div style="font-size:32px;margin-bottom:8px;opacity:.35">📄</div>
+            <div style="font-size:12px;color:var(--text-sec);font-weight:600">클릭 또는 드래그로 DART 파일 업로드</div>
+            <div style="font-size:10px;color:var(--text-dim);margin-top:4px">PDF · JPG · PNG 지원 · 최대 3페이지 자동 변환</div>
+          </div>
+        </div>
+        <div id="dart-status" style="display:none;margin-top:8px;font-size:11px;padding:7px 12px;background:rgba(30,215,96,.08);border-radius:8px;font-weight:600"></div>
+        <button id="dart-analyze-btn" class="btn btn-g" style="margin-top:12px;display:none" onclick="analyzeDart()">
+          🤖 AI DART 분석 시작
+        </button>
+      </div>
+
+      <div class="panel" style="padding:14px 16px">
+        <div style="font-size:11px;font-weight:700;color:var(--text-sec);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px">분석 항목</div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-sec)"><span style="width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0"></span>매출액 · 영업이익 · 당기순이익</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-sec)"><span style="width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0"></span>부채비율 · 재무 건전성</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-sec)"><span style="width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0"></span>주요 사업 내용 요약</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-sec)"><span style="width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0"></span>주요 리스크 사항</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-sec)"><span style="width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0"></span>성장 포인트 및 기회요인</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 오른쪽: 결과 -->
+    <div id="dart-result-area">
+      <div class="panel" style="text-align:center;padding:60px 20px">
+        <div style="font-size:48px;opacity:.15;margin-bottom:14px">📊</div>
+        <div style="font-size:14px;color:var(--text-dim);line-height:1.7">DART 파일을 업로드하고<br><b style="color:var(--text-sec)">AI DART 분석 시작</b>을 눌러주세요</div>
       </div>
     </div>
   </div>
@@ -6889,7 +6942,8 @@ async function processDartFile(file) {
       document.getElementById('dart-zone-inner').innerHTML =
         `<div style="font-size:22px;margin-bottom:4px">✅</div>
          <div style="font-size:12px;color:var(--green);font-weight:700">${file.name}</div>
-         <div style="font-size:10px;color:var(--text-dim);margin-top:3px">${pageCount}페이지 이미지 변환 완료 (~${approxKB} KB) · AI 분석 준비 완료</div>`;
+         <div style="font-size:10px;color:var(--text-dim);margin-top:3px">${pageCount}페이지 변환 완료 (~${approxKB} KB)</div>`;
+      document.getElementById('dart-analyze-btn').style.display = 'block';
     } else {
       // 이미지 파일
       const reader = new FileReader();
@@ -6909,13 +6963,133 @@ async function processDartFile(file) {
       document.getElementById('dart-zone-inner').innerHTML =
         `<div style="font-size:22px;margin-bottom:4px">✅</div>
          <div style="font-size:12px;color:var(--green);font-weight:700">${file.name}</div>
-         <div style="font-size:10px;color:var(--text-dim);margin-top:3px">${(file.size/1024).toFixed(0)} KB · AI 분석 준비 완료</div>`;
+         <div style="font-size:10px;color:var(--text-dim);margin-top:3px">${(file.size/1024).toFixed(0)} KB 업로드 완료</div>`;
+      document.getElementById('dart-analyze-btn').style.display = 'block';
     }
   } catch(err) {
+    document.getElementById('dart-analyze-btn').style.display = 'none';
     document.getElementById('dart-zone-inner').innerHTML =
       `<div style="font-size:22px;margin-bottom:4px">⚠️</div>
        <div style="font-size:12px;color:var(--danger);font-weight:700">파일 처리 실패</div>
        <div style="font-size:10px;color:var(--text-dim);margin-top:3px">${err.message}</div>`;
+  }
+}
+
+// ── DART AI 분석 ──
+async function analyzeDart() {
+  const btn = document.getElementById('dart-analyze-btn');
+  const statusEl = document.getElementById('dart-status');
+  const brand = document.getElementById('dart-brand')?.value.trim() || '';
+
+  if (!PPT_DATA.dartBase64) { alert('파일을 먼저 업로드하세요'); return; }
+
+  btn.disabled = true; btn.textContent = '🤖 AI 분석 중...';
+  statusEl.style.display = 'block';
+  statusEl.style.color = 'var(--text-sec)';
+  statusEl.textContent = '⏳ Claude AI가 DART 공시 내용을 분석하고 있습니다...';
+
+  try {
+    const imgData = `data:${PPT_DATA.dartMime};base64,${PPT_DATA.dartBase64}`;
+    const r = await fetch('/api/dart', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: imgData, extraPages: PPT_DATA.dartExtraPages, brand })
+    });
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+
+    PPT_DATA.dartAnalysis = d;
+    statusEl.style.color = 'var(--green)';
+    statusEl.textContent = '✅ 분석 완료 — 전략 PPT에 자동 반영됩니다';
+    btn.textContent = '🔄 다시 분석';
+    btn.disabled = false;
+    renderDartResult(d);
+    updateDartPptStatus();
+  } catch(err) {
+    statusEl.style.color = 'var(--danger)';
+    statusEl.textContent = `⚠ 분석 실패: ${err.message}`;
+    btn.textContent = '🤖 AI DART 분석 시작';
+    btn.disabled = false;
+  }
+}
+
+function renderDartResult(d) {
+  const el = document.getElementById('dart-result-area');
+  if (!el) return;
+  if (!d) {
+    el.innerHTML = `<div class="panel" style="text-align:center;padding:60px 20px">
+      <div style="font-size:48px;opacity:.15;margin-bottom:14px">📊</div>
+      <div style="font-size:14px;color:var(--text-dim);line-height:1.7">DART 파일을 업로드하고<br><b style="color:var(--text-sec)">AI DART 분석 시작</b>을 눌러주세요</div>
+    </div>`;
+    return;
+  }
+  const safe = v => v || '—';
+  const financials = [
+    ['매출액', d.revenue, '#1ed760'],
+    ['영업이익', d.operatingProfit, '#3b82f6'],
+    ['당기순이익', d.netIncome, '#f59e0b'],
+    ['부채비율', d.debtRatio, '#f3727f']
+  ];
+  el.innerHTML = `
+    <div class="panel">
+      <div class="ph">분석 결과</div>
+      <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px">
+        <div style="font-size:16px;font-weight:800;color:#fff">${safe(d.companyName)}</div>
+        <div style="font-size:11px;color:var(--text-dim)">${safe(d.reportType)} · ${safe(d.period)}</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px">
+        ${financials.map(([l,v,c]) => `
+          <div style="background:var(--surface-2);border-radius:8px;padding:12px 14px;border-left:3px solid ${c}">
+            <div style="font-size:10px;font-weight:700;color:var(--text-sec);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">${l}</div>
+            <div style="font-size:15px;font-weight:800;color:#fff">${safe(v)}</div>
+          </div>`).join('')}
+      </div>
+
+      ${d.businessSummary ? `
+        <div style="background:rgba(30,215,96,.07);border-radius:8px;padding:12px 14px;border-left:3px solid var(--green);margin-bottom:14px">
+          <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">사업 개요</div>
+          <div style="font-size:12px;color:var(--text);line-height:1.65">${d.businessSummary}</div>
+        </div>` : ''}
+
+      <div style="display:grid;grid-template-columns:${(d.majorRisks?.length && d.growthHighlights?.length) ? '1fr 1fr' : '1fr'};gap:14px">
+        ${d.majorRisks?.length ? `
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--danger);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">⚠ 주요 리스크</div>
+            ${d.majorRisks.map(r => `<div style="font-size:11px;color:var(--text-sec);padding:5px 0;border-bottom:1px solid var(--border);line-height:1.5">${r}</div>`).join('')}
+          </div>` : ''}
+        ${d.growthHighlights?.length ? `
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">✓ 성장 포인트</div>
+            ${d.growthHighlights.map(g => `<div style="font-size:11px;color:var(--text-sec);padding:5px 0;border-bottom:1px solid var(--border);line-height:1.5">${g}</div>`).join('')}
+          </div>` : ''}
+      </div>
+    </div>
+
+    <div class="panel" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(30,215,96,.05);border-color:rgba(30,215,96,.2)">
+      <div style="font-size:22px;flex-shrink:0">✅</div>
+      <div style="min-width:0">
+        <div style="font-size:12px;font-weight:700;color:var(--green)">전략 PPT에 자동 연동됩니다</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:2px">전략 PPT 탭에서 PPT를 생성하면 이 분석 결과가 브랜드 현황 슬라이드에 포함됩니다</div>
+      </div>
+      <button onclick="goTab(9)"
+        style="flex-shrink:0;padding:7px 16px;border-radius:9999px;border:1px solid var(--green);background:transparent;color:var(--green);font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;margin-left:auto"
+        onmouseover="this.style.background='var(--green)';this.style.color='#000'"
+        onmouseout="this.style.background='transparent';this.style.color='var(--green)'">
+        전략 PPT →
+      </button>
+    </div>
+  `;
+}
+
+function updateDartPptStatus() {
+  const el = document.getElementById('dart-ppt-status-txt');
+  if (!el) return;
+  if (PPT_DATA.dartAnalysis) {
+    const name = PPT_DATA.dartAnalysis.companyName || '분석 완료';
+    el.innerHTML = `<span style="color:var(--green)">✅ DART 분석 완료 (${name}) · PPT에 반영됩니다</span>`;
+  } else {
+    el.textContent = 'DART 탭에서 공시 파일을 분석하면 PPT에 자동 반영됩니다';
   }
 }
 

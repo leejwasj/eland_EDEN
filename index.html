@@ -40,7 +40,7 @@ body{font-family:'Noto Sans KR',SpotifyMixUI,CircularSp-Arab,Helvetica Neue,helv
 /* ── Tab bar ── */
 .nav{position:sticky;top:56px;z-index:190;display:flex;justify-content:center;
   background:rgba(14,14,14,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-  border-bottom:1px solid rgba(255,255,255,.06);gap:0;padding:0}
+  border-bottom:1px solid #ebebeb;gap:0;padding:0}
 .nb{padding:0 28px;height:46px;border-radius:0;font-size:13px;font-weight:500;
   color:var(--text-sec);cursor:pointer;border:none;background:transparent;
   white-space:nowrap;transition:color .15s,border-color .15s;
@@ -431,7 +431,7 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
 
 /* Panel glass */
 .panel{background:rgba(22,22,22,.75)!important;backdrop-filter:blur(12px)!important;-webkit-backdrop-filter:blur(12px)!important;border:1px solid rgba(255,255,255,.055)!important;box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 18px 48px rgba(0,0,0,.38)!important;transition:border-color .2s,box-shadow .2s!important}
-.panel:hover{border-color:rgba(255,255,255,.1)!important;box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 24px 64px rgba(0,0,0,.45)!important}
+.panel:hover{border-color:rgba(255,255,255,.1)!important;box-shadow:0 1px 0 #ebebeb inset,0 24px 64px rgba(0,0,0,.45)!important}
 
 /* Button glow */
 .btn-g:hover{box-shadow:0 6px 28px rgba(30,215,96,.42)!important;transform:translateY(-2px) scale(1.01)!important}
@@ -498,7 +498,7 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
 /* ── Brand Overview ── */
 .ov-section-label{font-size:11px;font-weight:800;color:var(--text-dim);letter-spacing:3px;text-transform:uppercase;margin:20px 0 10px;padding-left:2px}
 .ov-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:16px}
-.ov-cat-card{background:rgba(28,28,28,.8);border-radius:var(--r);padding:16px;border:1px solid rgba(255,255,255,.06);transition:border-color .15s}
+.ov-cat-card{background:rgba(28,28,28,.8);border-radius:var(--r);padding:16px;border:1px solid #ebebeb;transition:border-color .15s}
 .ov-cat-card:hover{border-color:rgba(30,215,96,.25)}
 .ov-cat-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .ov-cat-nm{font-size:12px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.6px}
@@ -506,7 +506,7 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
 .ov-brand-list{display:flex;flex-wrap:wrap;gap:4px}
 .ov-brand{padding:3px 9px;border-radius:9999px;font-size:11px;font-weight:500;background:rgba(255,255,255,.05);color:var(--text-sec);border:1px solid rgba(255,255,255,.07);white-space:nowrap}
 .ov-unclassified .ov-brand{background:rgba(255,164,43,.06);color:var(--warn);border-color:rgba(255,164,43,.2)}
-.ov-summary-bar{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;padding:16px 20px;background:rgba(28,28,28,.8);border-radius:var(--r);border:1px solid rgba(255,255,255,.06)}
+.ov-summary-bar{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;padding:16px 20px;background:rgba(28,28,28,.8);border-radius:var(--r);border:1px solid #ebebeb}
 .ov-sum-item{display:flex;flex-direction:column;gap:2px}
 .ov-sum-num{font-size:22px;font-weight:800;color:#fff;letter-spacing:-1px}
 .ov-sum-lbl{font-size:10px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px}
@@ -515,7 +515,7 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
 
 /* ── Brand Keyword Dashboard (Tab 5) ── */
 .kw-summary{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px}
-.kw-sum-card{flex:1;min-width:110px;padding:14px 16px;background:rgba(28,28,28,.8);border-radius:var(--r);border:1px solid rgba(255,255,255,.06)}
+.kw-sum-card{flex:1;min-width:110px;padding:14px 16px;background:rgba(28,28,28,.8);border-radius:var(--r);border:1px solid #ebebeb}
 .kw-sum-val{font-size:20px;font-weight:800;letter-spacing:-0.5px;color:#fff}
 .kw-sum-lbl{font-size:10px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-top:3px}
 .kw-two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
@@ -528,7 +528,7 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
 .kw-bar-fill{height:100%;border-radius:4px;background:var(--green);transition:width .5s ease}
 .kw-bar-cnt{font-size:11px;color:var(--text-sec);width:28px;text-align:right;flex-shrink:0}
 .kw-prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
-.kw-prod-card{background:rgba(28,28,28,.8);border-radius:var(--r);border:1px solid rgba(255,255,255,.06);overflow:hidden;transition:border-color .15s;cursor:pointer}
+.kw-prod-card{background:rgba(28,28,28,.8);border-radius:var(--r);border:1px solid #ebebeb;overflow:hidden;transition:border-color .15s;cursor:pointer}
 .kw-prod-card:hover{border-color:rgba(30,215,96,.3)}
 .kw-prod-img{width:100%;aspect-ratio:1;object-fit:cover;background:var(--surface-2)}
 .kw-prod-info{padding:8px 10px}
@@ -2608,7 +2608,7 @@ async function runBrandToStore(){
               background:rgba(255,255,255,.05);color:var(--text-sec);border:1px solid rgba(255,255,255,.09)">${t}</span>`).join('')}
           </div>
           ${(ebg.insights||[]).length ? `
-          <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06)">
+          <div style="margin-top:10px;padding-top:10px;border-top:1px solid #ebebeb">
             ${ebg.insights.slice(0,2).map(ins=>`<div style="font-size:11px;color:var(--text-sec);line-height:1.6;margin-bottom:3px">${ins}</div>`).join('')}
           </div>` : ''}
         </div>`;
@@ -2650,7 +2650,7 @@ async function runBrandToStore(){
         </div>
       </div>`;
     }).join('')
-    +(alreadyIn.length?`<div style="margin-top:16px;padding:12px 14px;background:rgba(255,255,255,.03);border-radius:var(--r);border:1px solid rgba(255,255,255,.06)">
+    +(alreadyIn.length?`<div style="margin-top:16px;padding:12px 14px;background:rgba(255,255,255,.03);border-radius:var(--r);border:1px solid #ebebeb">
         <div style="font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">이미 입점된 점포 (추천 제외)</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">${alreadyIn.map(r=>`<span style="padding:3px 10px;border-radius:9999px;font-size:11px;background:rgba(255,255,255,.05);color:var(--text-dim);border:1px solid rgba(255,255,255,.08)">${r.name}</span>`).join('')}</div>
       </div>`:'');
@@ -3934,7 +3934,7 @@ function onT4BrandChange() {
     offlineCat ? `<span style="font-size:10px;padding:2px 8px;border-radius:9999px;
       background:rgba(100,180,255,.12);color:#64B4FF;border:1px solid rgba(100,180,255,.2);font-weight:700">오프라인 ${offlineCat}</span>` : '',
     platRanks.length === 0 ? `<span style="font-size:10px;padding:2px 8px;border-radius:9999px;
-      background:rgba(255,255,255,.06);color:var(--text-dim);border:1px solid rgba(255,255,255,.08)">플랫폼 미등재</span>` : '',
+      background:#ebebeb;color:var(--text-dim);border:1px solid rgba(255,255,255,.08)">플랫폼 미등재</span>` : '',
   ].filter(Boolean).join(' ');
 
   el.innerHTML = `
@@ -3976,7 +3976,7 @@ function onT4BrandChange() {
         ${notCarrying.map(s => `
           <span style="padding:4px 10px;border-radius:9999px;font-size:11px;
             background:rgba(255,255,255,.04);color:var(--text-dim);
-            border:1px solid rgba(255,255,255,.06)">${s}</span>`).join('')}
+            border:1px solid #ebebeb">${s}</span>`).join('')}
       </div>` : ''}
   `;
 
@@ -4019,7 +4019,7 @@ function renderKwRecent(){
   if(!el)return;
   el.innerHTML=KW_RECENT.slice(0,8).map(b=>
     `<span style="padding:4px 10px;border-radius:9999px;font-size:11px;font-weight:600;
-      background:rgba(255,255,255,.06);color:var(--text-sec);border:1px solid rgba(255,255,255,.1);
+      background:#ebebeb;color:var(--text-sec);border:1px solid rgba(255,255,255,.1);
       cursor:pointer" onclick="document.getElementById('kw-brand').value='${b}';runBrandKeyword()">${b}</span>`
   ).join('');
 }
@@ -4252,7 +4252,7 @@ function renderDashTrend(data) {
                 <span style="font-size:13px;font-weight:600;color:var(--text)">${r.name}</span>
                 <span style="font-size:12px;color:var(--sec)">${r.total.toLocaleString()}건</span>
               </div>
-              <div style="height:6px;background:rgba(255,255,255,.06);border-radius:9999px;overflow:hidden">
+              <div style="height:6px;background:#ebebeb;border-radius:9999px;overflow:hidden">
                 <div style="height:100%;width:${pct}%;background:${r.color};border-radius:9999px;transition:width 1s ease"></div>
               </div>
             </div>`;
@@ -6222,19 +6222,27 @@ function toggleFloorPlan(id, checked) {
   renderFloorList();
 }
 
-// ── 다이소 샘플 덱 (시연용 · 임원 브리핑 다크 스타일) ──
-const _DR = '#E60012';
-const _BG = '#0a0b0f', _CARD = '#15171f', _LIME = '#c2ff4d';
-const _BORD = 'rgba(255,255,255,.08)', _BORD_HI = 'rgba(194,255,77,.4)';
-const _TXT = '#f1f5f9', _DIM = '#7c8493';
+// ── 다이소 샘플 덱 (Airbnb-inspired · 클린 라이트 테마) ──
+const _DR = '#222222';                      // ink (보조 강조)
+const _BG = '#ffffff';                      // canvas (순백)
+const _CARD = '#ffffff';                    // surface-card
+const _LIME = '#ff385c';                    // Rausch (메인 brand voltage)
+const _BORD = '#ebebeb';                    // hairline-soft
+const _BORD_HI = '#ff385c';                 // primary border (강조)
+const _TXT = '#222222';                     // ink
+const _DIM = '#6a6a6a';                     // muted
+const _BODY = '#3f3f3f';                    // body text
+const _SURF_SOFT = '#f7f7f7';               // surface-soft (subtle bg)
+const _SURF_STRONG = '#f2f2f2';             // surface-strong
+const _SHADOW = '0 1px 2px rgba(0,0,0,.04),0 2px 8px rgba(0,0,0,.06)';
 
-// 그라데이션 헤더 (이미지 대신) — 위치/카테고리별 컬러 매핑
+// 카테고리별 그라데이션 (Airbnb 톤 — 부드러운 파스텔)
 const _grads = [
-  'linear-gradient(135deg,#7f1d1d 0%,#dc2626 60%,#fb923c 100%)',
-  'linear-gradient(135deg,#1e3a8a 0%,#2563eb 60%,#60a5fa 100%)',
-  'linear-gradient(135deg,#365314 0%,#65a30d 60%,#c2ff4d 100%)',
-  'linear-gradient(135deg,#4c1d95 0%,#7c3aed 60%,#c084fc 100%)',
-  'linear-gradient(135deg,#134e4a 0%,#0d9488 60%,#5eead4 100%)',
+  'linear-gradient(135deg,#fef2f2 0%,#fecdd3 50%,#fb7185 100%)',  // soft rose
+  'linear-gradient(135deg,#eef2ff 0%,#c7d2fe 50%,#818cf8 100%)',  // soft indigo
+  'linear-gradient(135deg,#ecfdf5 0%,#a7f3d0 50%,#34d399 100%)',  // soft mint
+  'linear-gradient(135deg,#fdf4ff 0%,#e9d5ff 50%,#a78bfa 100%)',  // soft lavender
+  'linear-gradient(135deg,#fffbeb 0%,#fde68a 50%,#f59e0b 100%)',  // soft amber
 ];
 
 // 도시 실루엣 SVG 패턴 (장식용)
@@ -6243,25 +6251,24 @@ const _skyline = `<svg viewBox="0 0 100 30" preserveAspectRatio="none" style="po
 </svg>`;
 
 function _dHead(eye, title, accent) {
-  return `<div style="padding:9px 20px 8px;background:${_BG};border-bottom:1px solid ${_BORD};position:relative;flex-shrink:0">
-    <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:${accent}"></div>
-    <div style="font-size:7px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:${accent};margin-bottom:3px">${eye}</div>
-    <div style="font-size:17px;font-weight:900;color:${_TXT};line-height:1.2;letter-spacing:-.3px">${title}</div>
+  return `<div style="padding:14px 24px 12px;background:${_BG};border-bottom:1px solid ${_BORD};position:relative;flex-shrink:0">
+    <div style="font-size:8px;font-weight:700;letter-spacing:.32px;text-transform:uppercase;color:${accent};margin-bottom:4px">${eye}</div>
+    <div style="font-size:21px;font-weight:600;color:${_TXT};line-height:1.2;letter-spacing:-.3px">${title}</div>
   </div>`;
 }
 function _dFoot(t) {
-  return `<div style="font-size:7px;color:#475569;text-align:right;padding:4px 16px;background:${_BG};font-weight:500">${t}</div>`;
+  return `<div style="font-size:11px;color:${_DIM};text-align:right;padding:8px 24px;background:${_BG};font-weight:400;border-top:1px solid ${_BORD}">${t}</div>`;
 }
 function _gHead(label, gradIdx, height) {
-  return `<div style="position:relative;height:${height||60}px;background:${_grads[gradIdx%5]};overflow:hidden;flex-shrink:0">
+  return `<div style="position:relative;height:${height||60}px;background:${_grads[gradIdx%5]};overflow:hidden;flex-shrink:0;border-radius:14px 14px 0 0">
     ${_skyline}
-    <div style="position:absolute;bottom:7px;left:10px;right:10px;font-size:13px;font-weight:900;color:#fff;letter-spacing:-.3px;text-shadow:0 1px 3px rgba(0,0,0,.4)">${label}</div>
+    <div style="position:absolute;bottom:9px;left:14px;right:14px;font-size:13px;font-weight:600;color:#fff;letter-spacing:-.2px;text-shadow:0 1px 4px rgba(0,0,0,.25)">${label}</div>
   </div>`;
 }
 function _kpi(val, label, accent, highlight) {
-  return `<div style="background:${_CARD};border-radius:10px;padding:14px 16px;border:1px solid ${highlight?_BORD_HI:_BORD};display:flex;flex-direction:column;justify-content:center;flex:1;${highlight?`box-shadow:inset 0 0 0 1px ${_BORD_HI}`:''}">
-    <div style="font-size:32px;font-weight:900;color:${accent};line-height:1;letter-spacing:-1.5px">${val}</div>
-    <div style="font-size:10px;color:${_DIM};margin-top:6px;line-height:1.4;font-weight:500">${label}</div>
+  return `<div style="background:${_CARD};border-radius:14px;padding:18px 20px;border:1px solid ${highlight?_BORD_HI:_BORD};display:flex;flex-direction:column;justify-content:center;flex:1;${highlight?`box-shadow:${_SHADOW}`:''}">
+    <div style="font-size:30px;font-weight:700;color:${accent};line-height:1;letter-spacing:-1px">${val}</div>
+    <div style="font-size:12px;color:${_DIM};margin-top:8px;line-height:1.43;font-weight:400">${label}</div>
   </div>`;
 }
 
@@ -6280,7 +6287,7 @@ function daisoS1() {
       <div style="padding:10px 11px;flex:1;display:flex;flex-direction:column">
         <div style="font-size:28px;font-weight:900;color:${_LIME};line-height:1;letter-spacing:-1.5px">${a.kpi}</div>
         <div style="font-size:8.5px;color:${_DIM};margin-bottom:9px;margin-top:4px;font-weight:600">${a.kLabel}</div>
-        ${a.pts.map(p=>`<div style="font-size:9px;color:#c5cad4;padding:5px 0;border-top:1px solid ${_BORD};line-height:1.45;font-weight:500">${p}</div>`).join('')}
+        ${a.pts.map(p=>`<div style="font-size:9px;color:#3f3f3f;padding:5px 0;border-top:1px solid ${_BORD};line-height:1.45;font-weight:500">${p}</div>`).join('')}
       </div>
     </div>`).join('')}
   </div>${_dFoot('전략적 출점 타깃 5개 상권 · 규모·집객력·경쟁환경 종합 평가')}</div>`;
@@ -6304,7 +6311,7 @@ function daisoS2() {
       </div>
       <div style="padding:9px 11px;flex:1;display:flex;flex-direction:column">
         <div style="font-size:9px;color:${s.score===90?_LIME:_DR};font-weight:700;margin-bottom:8px;letter-spacing:-.2px">${s.tag}</div>
-        ${s.pts.map(p=>`<div style="font-size:8.5px;color:#c5cad4;padding:5px 0;border-top:1px solid ${_BORD};line-height:1.5;font-weight:500">${p}</div>`).join('')}
+        ${s.pts.map(p=>`<div style="font-size:8.5px;color:#3f3f3f;padding:5px 0;border-top:1px solid ${_BORD};line-height:1.5;font-weight:500">${p}</div>`).join('')}
       </div>
     </div>`).join('')}
   </div>${_dFoot('이랜드리테일 5개 최적 지점 · 상권 적합도 기반 선정')}</div>`;
@@ -6331,7 +6338,7 @@ function daisoS3() {
       </div>
     </div>
     <div style="background:${_CARD};border-radius:10px;border:1px solid ${_BORD};padding:10px 14px;flex-shrink:0;border-left:3px solid ${_LIME}">
-      <div style="font-size:9.5px;color:#c5cad4;line-height:1.7;font-weight:500"><span style="color:${_LIME};font-weight:800">EXECUTIVE SUMMARY</span> · 균일가 생활용품 1위 사업자 · 고물가 최대 수혜 브랜드 · 뷰티/이너웨어 카테고리 확장으로 MZ 고객 급증 · 2026년 <span style="color:${_LIME};font-weight:800">5조 클럽 진입 확실</span> · 영업이익률 <span style="color:${_LIME};font-weight:800">9.7%</span> 유지 — 이랜드리테일 인샵 파트너로 최적 조건.</div>
+      <div style="font-size:9.5px;color:#3f3f3f;line-height:1.7;font-weight:500"><span style="color:${_LIME};font-weight:800">EXECUTIVE SUMMARY</span> · 균일가 생활용품 1위 사업자 · 고물가 최대 수혜 브랜드 · 뷰티/이너웨어 카테고리 확장으로 MZ 고객 급증 · 2026년 <span style="color:${_LIME};font-weight:800">5조 클럽 진입 확실</span> · 영업이익률 <span style="color:${_LIME};font-weight:800">9.7%</span> 유지 — 이랜드리테일 인샵 파트너로 최적 조건.</div>
     </div>
   </div>${_dFoot('고물가 시대 가성비 무기로 역대 최대 실적 경신 중')}</div>`;
 }
@@ -6398,8 +6405,8 @@ function daisoNews() {
     <div style="background:${_CARD};border-radius:10px;padding:11px 16px;border:1px solid ${_BORD_HI};flex-shrink:0;border-left:3px solid ${_LIME}">
       <div style="font-size:9px;font-weight:800;color:${_LIME};margin-bottom:6px;letter-spacing:1.5px;text-transform:uppercase">MD 전략 시사점</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        <div style="font-size:9px;color:#c5cad4;line-height:1.6;font-weight:500;padding-left:10px;border-left:2px solid ${_DR}">뷰티·생활용품 카테고리 확장 흐름 → 이랜드리테일 인샵 입점 시 MZ 트렌드 시너지 극대화</div>
-        <div style="font-size:9px;color:#c5cad4;line-height:1.6;font-weight:500;padding-left:10px;border-left:2px solid ${_LIME}">균일가 전략 + 물류 고도화 → 재고 안정·회전율 개선·객단가 상승 구조 동시 확인</div>
+        <div style="font-size:9px;color:#3f3f3f;line-height:1.6;font-weight:500;padding-left:10px;border-left:2px solid ${_DR}">뷰티·생활용품 카테고리 확장 흐름 → 이랜드리테일 인샵 입점 시 MZ 트렌드 시너지 극대화</div>
+        <div style="font-size:9px;color:#3f3f3f;line-height:1.6;font-weight:500;padding-left:10px;border-left:2px solid ${_LIME}">균일가 전략 + 물류 고도화 → 재고 안정·회전율 개선·객단가 상승 구조 동시 확인</div>
       </div>
     </div>
   </div>${_dFoot('Claude AI 자동 수집 최신 이슈 · MD 전략 수립 참고용')}</div>`;
@@ -6418,7 +6425,7 @@ function _dProposal(num, name, score, benefits, summary, gradIdx) {
         <div style="font-size:7.5px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:${_DIM}">적합도 점수</div>
         <div style="position:relative;width:96px;height:96px;margin:3px 0">
           <svg viewBox="0 0 36 36" style="width:96px;height:96px;transform:rotate(-90deg)">
-            <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="3"/>
+            <circle cx="18" cy="18" r="14" fill="none" stroke="#ebebeb" stroke-width="3"/>
             <circle cx="18" cy="18" r="14" fill="none" stroke="${scoreColor}" stroke-width="3"
               stroke-dasharray="${dash.toFixed(1)} ${(circ-dash).toFixed(1)}" stroke-linecap="round"/>
           </svg>
@@ -6442,7 +6449,7 @@ function _dProposal(num, name, score, benefits, summary, gradIdx) {
       <div style="font-size:7.5px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:${_DIM}">입점 시 주요 혜택</div>
       ${benefits.map((b,i)=>`<div style="background:${_CARD};border-radius:9px;padding:11px 14px;border:1px solid ${_BORD};border-left:3px solid ${benefitColors[i]};flex:1;display:flex;align-items:center;gap:14px">
         <span style="font-size:30px;font-weight:900;color:${benefitColors[i]};flex-shrink:0;line-height:1;letter-spacing:-2px;opacity:.9">${i+1}</span>
-        <span style="font-size:10.5px;color:#dde2ea;line-height:1.55;font-weight:500;letter-spacing:-.2px">${b}</span>
+        <span style="font-size:10.5px;color:#3f3f3f;line-height:1.55;font-weight:500;letter-spacing:-.2px">${b}</span>
       </div>`).join('')}
     </div>
   </div>${_dFoot(summary)}</div>`;
@@ -6975,9 +6982,21 @@ async function generatePptContent() {
 
   btn.disabled = true; statusEl.style.display = 'block';
   statusEl.style.color = 'var(--text-sec)';
-  statusEl.textContent = '⏳ AI PPT 생성 중...';
 
-  await new Promise(r => setTimeout(r, 1400));
+  // 단계별 진행 표시 (총 15초 — 실제 분석처럼 느껴지도록)
+  const progressSteps = [
+    { delay: 1800, msg: '⏳ EBG 키맨 미팅 데이터 분석 중...' },
+    { delay: 2000, msg: '⏳ DART 공시 자료 파싱 중...' },
+    { delay: 2200, msg: '⏳ 점포별 적합도 점수 산출 중...' },
+    { delay: 2200, msg: '⏳ 상권 인구·소득 데이터 통합 중...' },
+    { delay: 2400, msg: '⏳ AI 전략 시나리오 작성 중...' },
+    { delay: 2200, msg: '⏳ 슬라이드 레이아웃 구성 중...' },
+    { delay: 1600, msg: '⏳ 최종 검증 및 마무리...' },
+  ];
+  for (const step of progressSteps) {
+    statusEl.textContent = step.msg;
+    await new Promise(r => setTimeout(r, step.delay));
+  }
 
   PPT_DATA.generated = true;
   statusEl.style.color = 'var(--green)';

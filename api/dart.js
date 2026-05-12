@@ -1,5 +1,5 @@
 const CLAUDE_MODEL = 'claude-haiku-4-5-20251001';
-const GEMINI_MODEL = 'gemini-1.5-flash'; // 무료 티어 지원
+const GEMINI_MODEL = 'gemini-2.0-flash';
 
 const DART_PROMPT = (brand) =>
   `이 문서는 DART(전자공시시스템)에 공시된 기업의 재무 관련 문서입니다.${brand ? ` 기업/브랜드명: ${brand}` : ''}

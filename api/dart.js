@@ -95,22 +95,31 @@ export default async function handler(req, res) {
 
   const prompt = DART_PROMPT(brand);
 
+  function isBillingError(msg) {
+    return /credit balance|billing|quota|insufficient/i.test(msg);
+  }
+
   try {
     let result;
     if (textInput) {
       // PDF 텍스트 추출본 — 이미지 토큰 불필요, 무료 티어 사용 가능
       if (anthropicKey) {
-        const r = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: { 'x-api-key': anthropicKey, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: CLAUDE_MODEL, max_tokens: 1024,
-            messages: [{ role: 'user', content: `${textInput}\n\n${prompt}` }]
-          })
-        });
-        if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.error?.message || `Claude API 오류 (${r.status})`); }
-        const d = await r.json();
-        result = d.content?.[0]?.text || '';
+        try {
+          const r = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'x-api-key': anthropicKey, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: CLAUDE_MODEL, max_tokens: 1024,
+              messages: [{ role: 'user', content: `${textInput}\n\n${prompt}` }]
+            })
+          });
+          if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.error?.message || `Claude API 오류 (${r.status})`); }
+          const d = await r.json();
+          result = d.content?.[0]?.text || '';
+        } catch (claudeErr) {
+          if (!geminiKey || !isBillingError(claudeErr.message)) throw claudeErr;
+          result = await analyzeWithGeminiText(geminiKey, textInput, prompt);
+        }
       } else {
         result = await analyzeWithGeminiText(geminiKey, textInput, prompt);
       }
@@ -120,7 +129,12 @@ export default async function handler(req, res) {
       if (!match) return res.status(400).json({ error: '유효하지 않은 파일 형식' });
       const [, mimeType, base64Data] = match;
       if (anthropicKey) {
-        result = await analyzeWithClaude(anthropicKey, mimeType, base64Data, extraPages, prompt);
+        try {
+          result = await analyzeWithClaude(anthropicKey, mimeType, base64Data, extraPages, prompt);
+        } catch (claudeErr) {
+          if (!geminiKey || !isBillingError(claudeErr.message)) throw claudeErr;
+          result = await analyzeWithGemini(geminiKey, image, extraPages, prompt);
+        }
       } else {
         result = await analyzeWithGemini(geminiKey, image, extraPages, prompt);
       }

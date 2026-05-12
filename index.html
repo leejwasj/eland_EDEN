@@ -2406,7 +2406,8 @@ function renderKakaoFull(brand,bDocs,compResults,rad){
 
 // ── API ──
 async function kakaoAPI(q,lat,lng,rad){
-  const r=await fetch(`/api/kakao?${new URLSearchParams({q,lat,lng,radius:rad})}`);
+  // size=45로 요청 (서버에서 페이지네이션해서 최대 45건 반환)
+  const r=await fetch(`/api/kakao?${new URLSearchParams({q,lat,lng,radius:rad,size:45})}`);
   if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(JSON.stringify(e.error||r.status));}
   return r.json();
 }

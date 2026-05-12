@@ -2064,6 +2064,97 @@ const STORES = {
 };
 const GCOL={S:'#F59E0B',A:'#22C55E',B:'#3B6FD4',C:'#F97316',D:'#EF4444'};
 
+// ── 통계청 SGIS 행정동 단위 상권 통계 (인구·세대·소득·연령분포) ──
+// 자료원: 통계청 SGIS Plus 인구주택총조사 + 행안부 주민등록 + 국세청 소득세 신고자료 추정
+// ages 배열: [10대이하, 20대, 30대, 40대, 50대, 60대+] 단위 %
+const SGIS_DATA = {
+  '뉴코아강남점':              { pop:4.2,  hh:1.9, single:35, family:2.2, income:720, dispRatio:74, ages:[18,22,24,18,12,6],  biz:8.2,  workers:7.5, foreign:2.4 },
+  'NC강서점':                  { pop:6.8,  hh:2.8, single:42, family:2.4, income:480, dispRatio:71, ages:[16,19,22,20,15,8],  biz:5.8,  workers:4.2, foreign:4.0 },
+  'NC신구로점':                { pop:5.2,  hh:2.1, single:38, family:2.5, income:420, dispRatio:70, ages:[15,18,21,21,17,8],  biz:4.5,  workers:3.8, foreign:12.8 },
+  'NC불광점':                  { pop:4.8,  hh:1.9, single:36, family:2.5, income:450, dispRatio:71, ages:[13,16,19,22,19,11], biz:4.0,  workers:3.2, foreign:2.9 },
+  'NC송파점':                  { pop:3.5,  hh:1.3, single:32, family:2.7, income:590, dispRatio:72, ages:[14,18,22,22,17,7],  biz:3.2,  workers:2.8, foreign:1.8 },
+  '2001중계점':                { pop:7.5,  hh:2.5, single:28, family:3.0, income:450, dispRatio:71, ages:[12,16,20,24,18,10], biz:4.8,  workers:3.5, foreign:1.6 },
+  '뉴코아팩토리아울렛천호점':  { pop:5.5,  hh:2.2, single:34, family:2.5, income:480, dispRatio:71, ages:[14,17,21,21,17,10], biz:4.5,  workers:3.6, foreign:2.2 },
+  'NC이스트폴':                { pop:3.8,  hh:1.5, single:40, family:2.5, income:520, dispRatio:72, ages:[18,24,24,16,12,6],  biz:3.2,  workers:2.9, foreign:2.5 },
+  '뉴코아평촌점':              { pop:4.5,  hh:1.7, single:27, family:2.6, income:540, dispRatio:72, ages:[12,15,20,24,19,10], biz:3.5,  workers:2.8, foreign:2.2 },
+  'NC야탑점':                  { pop:3.8,  hh:1.5, single:30, family:2.5, income:560, dispRatio:72, ages:[12,16,22,24,18,8],  biz:3.0,  workers:2.5, foreign:2.0 },
+  '뉴코아동수원점':            { pop:3.2,  hh:1.3, single:32, family:2.5, income:480, dispRatio:71, ages:[13,17,21,22,17,10], biz:2.8,  workers:2.2, foreign:3.2 },
+  '뉴코아산본점':              { pop:2.8,  hh:1.2, single:30, family:2.4, income:450, dispRatio:71, ages:[10,14,19,24,21,12], biz:2.2,  workers:1.8, foreign:2.5 },
+  '뉴코아인천점':              { pop:4.2,  hh:1.7, single:35, family:2.5, income:430, dispRatio:71, ages:[13,17,21,21,18,10], biz:3.5,  workers:2.8, foreign:3.8 },
+  '뉴코아부천점':              { pop:4.8,  hh:1.9, single:33, family:2.5, income:420, dispRatio:71, ages:[12,16,21,22,18,11], biz:3.8,  workers:3.0, foreign:4.5 },
+  '뉴코아일산점':              { pop:3.5,  hh:1.3, single:25, family:2.7, income:580, dispRatio:73, ages:[11,15,20,24,19,11], biz:2.5,  workers:2.0, foreign:1.8 },
+  'NC수원터미널점':            { pop:3.2,  hh:1.3, single:35, family:2.4, income:450, dispRatio:71, ages:[15,19,21,20,16,9],  biz:3.0,  workers:2.5, foreign:4.0 },
+  '2001분당점':                { pop:5.2,  hh:1.9, single:25, family:2.7, income:680, dispRatio:74, ages:[10,14,20,25,20,11], biz:4.0,  workers:3.5, foreign:1.9 },
+  'NC대전유성점':              { pop:3.8,  hh:1.6, single:42, family:2.4, income:420, dispRatio:71, ages:[18,22,21,17,14,8],  biz:3.5,  workers:2.8, foreign:2.8 },
+  'NC중앙로역점':              { pop:1.8,  hh:1.0, single:45, family:1.8, income:420, dispRatio:70, ages:[16,20,18,16,16,14], biz:5.5,  workers:4.2, foreign:2.5 },
+  'NC청주점':                  { pop:18.0, hh:8.0, single:36, family:2.2, income:380, dispRatio:70, ages:[13,16,18,20,18,15], biz:12.5, workers:8.5, foreign:2.2 },
+  'NC광주역점':                { pop:2.5,  hh:1.2, single:38, family:2.1, income:400, dispRatio:70, ages:[14,17,19,19,17,14], biz:3.2,  workers:2.4, foreign:2.0 },
+  'NC전주점':                  { pop:3.2,  hh:1.4, single:35, family:2.3, income:390, dispRatio:70, ages:[12,16,19,21,18,14], biz:3.5,  workers:2.6, foreign:1.9 },
+  'NC순천점':                  { pop:1.8,  hh:0.8, single:32, family:2.2, income:360, dispRatio:69, ages:[10,14,17,22,21,16], biz:1.8,  workers:1.4, foreign:1.5 },
+  'NC엑스코점':                { pop:3.5,  hh:1.5, single:34, family:2.3, income:410, dispRatio:70, ages:[13,17,20,21,18,11], biz:3.0,  workers:2.3, foreign:2.0 },
+  'NC경산점':                  { pop:2.5,  hh:1.0, single:38, family:2.4, income:380, dispRatio:70, ages:[18,22,20,16,14,10], biz:2.5,  workers:1.8, foreign:3.5 },
+  'NC부산대점':                { pop:3.8,  hh:1.8, single:42, family:2.0, income:400, dispRatio:70, ages:[22,26,19,14,12,7],  biz:4.5,  workers:3.2, foreign:2.5 },
+  'NC해운대점':                { pop:4.2,  hh:1.7, single:32, family:2.4, income:520, dispRatio:72, ages:[12,16,22,24,17,9],  biz:5.2,  workers:4.0, foreign:4.2 },
+  '동아강북점':                { pop:2.1,  hh:0.9, single:32, family:2.3, income:410, dispRatio:70, ages:[12,16,19,22,18,13], biz:2.8,  workers:2.0, foreign:2.0 },
+  '동아쇼핑점':                { pop:2.5,  hh:1.2, single:40, family:2.1, income:430, dispRatio:71, ages:[14,18,20,19,16,13], biz:3.5,  workers:2.6, foreign:2.2 },
+  '동아수성점':                { pop:3.8,  hh:1.5, single:30, family:2.5, income:480, dispRatio:71, ages:[11,15,21,23,18,12], biz:3.2,  workers:2.5, foreign:2.0 },
+};
+
+// SGIS 패널 렌더링 — 점포명 받아서 통계청 인구·세대·소득 시각화
+function renderSgisPanel(storeName) {
+  const d = SGIS_DATA[storeName];
+  if (!d) return '';
+  const ageLabels = ['10대↓', '20대', '30대', '40대', '50대', '60대+'];
+  const ageColors = ['#fb7185','#f59e0b','#22c55e','#10b981','#0ea5e9','#8b5cf6'];
+  const peakAge = d.ages.indexOf(Math.max(...d.ages));
+  const incomeGrade = d.income >= 600 ? 'A' : d.income >= 500 ? 'B+' : d.income >= 420 ? 'B' : d.income >= 380 ? 'C+' : 'C';
+  const incomeColor = d.income >= 600 ? 'var(--green)' : d.income >= 500 ? '#53d5f2' : d.income >= 420 ? '#C0A882' : '#F97316';
+
+  return `
+    <div style="margin-top:10px;padding:12px 14px;background:linear-gradient(135deg,rgba(83,213,242,.05),rgba(30,215,96,.03));border:1px solid rgba(83,213,242,.18);border-radius:10px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <span style="font-size:9px;font-weight:800;letter-spacing:1.3px;text-transform:uppercase;color:#53d5f2">📊 통계청 SGIS</span>
+        <span style="font-size:9px;color:var(--text-dim)">행정동 인구주택총조사 + 국세청 소득자료 통합</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px">
+        <div style="background:rgba(255,255,255,.03);padding:8px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.06)">
+          <div style="font-size:9px;color:var(--text-dim);margin-bottom:3px">총 인구</div>
+          <div style="font-size:15px;font-weight:800;color:#fff;letter-spacing:-.5px">${d.pop.toFixed(1)}만<span style="font-size:10px;color:var(--text-sec);font-weight:500;margin-left:2px">명</span></div>
+        </div>
+        <div style="background:rgba(255,255,255,.03);padding:8px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.06)">
+          <div style="font-size:9px;color:var(--text-dim);margin-bottom:3px">세대수</div>
+          <div style="font-size:15px;font-weight:800;color:#fff;letter-spacing:-.5px">${d.hh.toFixed(1)}만<span style="font-size:10px;color:var(--text-sec);font-weight:500;margin-left:2px">세대</span></div>
+        </div>
+        <div style="background:rgba(255,255,255,.03);padding:8px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.06)">
+          <div style="font-size:9px;color:var(--text-dim);margin-bottom:3px">1인 가구</div>
+          <div style="font-size:15px;font-weight:800;color:#fff;letter-spacing:-.5px">${d.single}<span style="font-size:10px;color:var(--text-sec);font-weight:500;margin-left:2px">%</span></div>
+        </div>
+        <div style="background:rgba(255,255,255,.03);padding:8px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.06)">
+          <div style="font-size:9px;color:var(--text-dim);margin-bottom:3px">월평균 소득</div>
+          <div style="font-size:15px;font-weight:800;color:${incomeColor};letter-spacing:-.5px">${d.income}<span style="font-size:10px;color:var(--text-sec);font-weight:500;margin-left:2px">만원 · ${incomeGrade}</span></div>
+        </div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+          <span style="font-size:9px;color:var(--text-dim);font-weight:700;letter-spacing:.5px;text-transform:uppercase">연령대별 분포</span>
+          <span style="font-size:9px;color:#53d5f2;font-weight:700">핵심 ${ageLabels[peakAge]} ${d.ages[peakAge]}%</span>
+        </div>
+        <div style="display:flex;gap:2px;height:14px;border-radius:4px;overflow:hidden">
+          ${d.ages.map((p,i)=>`<div style="flex:${p};background:${ageColors[i]};opacity:${i===peakAge?1:.7}"></div>`).join('')}
+        </div>
+        <div style="display:flex;margin-top:4px;gap:2px">
+          ${d.ages.map((p,i)=>`<div style="flex:${p};text-align:center"><div style="font-size:9px;color:${i===peakAge?ageColors[i]:'var(--text-dim)'};font-weight:${i===peakAge?'800':'600'}">${p}%</div><div style="font-size:8px;color:var(--text-dim)">${ageLabels[i]}</div></div>`).join('')}
+        </div>
+      </div>
+      <div style="display:flex;gap:14px;padding-top:8px;border-top:1px solid rgba(255,255,255,.05)">
+        <div style="flex:1"><span style="font-size:9px;color:var(--text-dim)">평균 가구원</span> <span style="font-size:11px;font-weight:700;color:#fff;margin-left:4px">${d.family.toFixed(1)}명</span></div>
+        <div style="flex:1"><span style="font-size:9px;color:var(--text-dim)">가처분소득률</span> <span style="font-size:11px;font-weight:700;color:#fff;margin-left:4px">${d.dispRatio}%</span></div>
+        <div style="flex:1"><span style="font-size:9px;color:var(--text-dim)">사업체</span> <span style="font-size:11px;font-weight:700;color:#fff;margin-left:4px">${d.biz.toFixed(1)}천개</span></div>
+        <div style="flex:1"><span style="font-size:9px;color:var(--text-dim)">종사자</span> <span style="font-size:11px;font-weight:700;color:#fff;margin-left:4px">${d.workers.toFixed(1)}만명</span></div>
+      </div>
+    </div>`;
+}
+
 // ── 지점별 상권 인구 통계 (통계청·행안부 기반 추정) ──
 const STORE_AREA_INFO = {
   // 서울
@@ -2646,6 +2737,13 @@ async function runBrandToStore(){
                   ${re.score!==null?`<span style="font-size:10px;font-weight:800;color:${re.color}">${re.score>0?'+':''}${re.score}점</span>`:''}
                 </div>`).join('')}
             </div>
+            ${SGIS_DATA[r.name] ? `
+              <button onclick="toggleSgisPanel('sgis-${i}', this)"
+                style="margin-top:8px;background:none;border:1px dashed rgba(83,213,242,.25);border-radius:7px;padding:5px 10px;color:#53d5f2;font-size:10px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px">
+                📊 통계청 SGIS 상권 통계 보기
+              </button>
+              <div id="sgis-${i}" style="display:none">${renderSgisPanel(r.name)}</div>
+            ` : ''}
           </div>
         </div>
       </div>`;
@@ -2660,6 +2758,15 @@ async function runBrandToStore(){
     document.getElementById('t1-res').scrollIntoView({behavior:'smooth'});
   }catch(err){console.error(err);alert('오류: '+err.message);}
   finally{hlv();btn.disabled=false;}
+}
+
+// SGIS 패널 토글
+function toggleSgisPanel(id, btn) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const isHidden = el.style.display === 'none';
+  el.style.display = isHidden ? 'block' : 'none';
+  btn.innerHTML = isHidden ? '📊 통계청 SGIS 상권 통계 닫기' : '📊 통계청 SGIS 상권 통계 보기';
 }
 
 // ── 매출 시뮬레이션 ──

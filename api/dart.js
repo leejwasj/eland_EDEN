@@ -1,5 +1,5 @@
 const CLAUDE_MODEL = 'claude-haiku-4-5-20251001';
-const GEMINI_MODEL = 'gemini-2.0-flash';
+const GEMINI_MODEL = 'gemini-1.5-flash'; // 무료 티어 지원
 
 const DART_PROMPT = (brand) =>
   `이 문서는 DART(전자공시시스템)에 공시된 기업의 재무 관련 문서입니다.${brand ? ` 기업/브랜드명: ${brand}` : ''}
@@ -41,6 +41,7 @@ async function analyzeWithClaude(key, mimeType, base64Data, extraPages, prompt) 
 }
 
 async function analyzeWithGemini(key, image, extraPages, prompt) {
+  // 이미지 기반 분석 (스캔본 등)
   const parts = [];
   const allImgs = [image, ...extraPages.map(p => `data:${p.mimeType};base64,${p.data}`)];
   for (const img of allImgs) {
@@ -49,7 +50,16 @@ async function analyzeWithGemini(key, image, extraPages, prompt) {
     parts.push({ inline_data: { mime_type: m[1], data: m[2] } });
   }
   parts.push({ text: prompt });
+  return callGemini(key, parts);
+}
 
+async function analyzeWithGeminiText(key, text, prompt) {
+  // 텍스트 기반 분석 (무료 티어 가능)
+  const parts = [{ text: `${text}\n\n${prompt}` }];
+  return callGemini(key, parts);
+}
+
+async function callGemini(key, parts) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`;
   const r = await fetch(url, {
     method: 'POST',
@@ -80,23 +90,43 @@ export default async function handler(req, res) {
     });
   }
 
-  const { image, extraPages = [], brand } = req.body || {};
-  if (!image) return res.status(400).json({ error: 'image 필드 필요' });
-
-  const match = image.match(/^data:([\w\/+]+);base64,(.+)$/);
-  if (!match) return res.status(400).json({ error: '유효하지 않은 파일 형식' });
-  const [, mimeType, base64Data] = match;
+  const { image, text: textInput, extraPages = [], brand } = req.body || {};
+  if (!image && !textInput) return res.status(400).json({ error: 'image 또는 text 필드 필요' });
 
   const prompt = DART_PROMPT(brand);
 
   try {
-    let text;
-    if (anthropicKey) {
-      text = await analyzeWithClaude(anthropicKey, mimeType, base64Data, extraPages, prompt);
+    let result;
+    if (textInput) {
+      // PDF 텍스트 추출본 — 이미지 토큰 불필요, 무료 티어 사용 가능
+      if (anthropicKey) {
+        const r = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'x-api-key': anthropicKey, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: CLAUDE_MODEL, max_tokens: 1024,
+            messages: [{ role: 'user', content: `${textInput}\n\n${prompt}` }]
+          })
+        });
+        if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.error?.message || `Claude API 오류 (${r.status})`); }
+        const d = await r.json();
+        result = d.content?.[0]?.text || '';
+      } else {
+        result = await analyzeWithGeminiText(geminiKey, textInput, prompt);
+      }
     } else {
-      text = await analyzeWithGemini(geminiKey, image, extraPages, prompt);
+      // 이미지 파일 (스캔본)
+      const match = image.match(/^data:([\w\/+]+);base64,(.+)$/);
+      if (!match) return res.status(400).json({ error: '유효하지 않은 파일 형식' });
+      const [, mimeType, base64Data] = match;
+      if (anthropicKey) {
+        result = await analyzeWithClaude(anthropicKey, mimeType, base64Data, extraPages, prompt);
+      } else {
+        result = await analyzeWithGemini(geminiKey, image, extraPages, prompt);
+      }
     }
-    const jsonStr = text.match(/\{[\s\S]*\}/)?.[0];
+
+    const jsonStr = result.match(/\{[\s\S]*\}/)?.[0];
     if (!jsonStr) return res.status(200).json({ error: 'JSON 파싱 실패' });
     return res.status(200).json(JSON.parse(jsonStr));
   } catch (err) {

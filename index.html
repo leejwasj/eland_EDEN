@@ -6258,7 +6258,7 @@ let PPT_CUR = 0;
 let PPT_DATA = {
   brand:'', store:'', stores:[], ebgId:null,
   storeData:null, areaInfo:null, sampleMode:false, pptPrompt:'',
-  dartMime:null, dartBase64:null, dartExtraPages:[], dartAnalysis:null,
+  dartMime:null, dartBase64:null, dartExtraPages:[], dartText:null, dartAnalysis:null,
   references:[], // [{fileName, imageDataURL, mimeType, base64, analysis}]
   customSlides:[], // [{title, prompt, generated, loading}]
   news:[], ebgAnalysis:null, strategies:null,
@@ -6903,49 +6903,45 @@ function onDartFileChange(e) {
 
 async function processDartFile(file) {
   PPT_DATA.dartAnalysis = null;
+  PPT_DATA.dartText = null;
+  PPT_DATA.dartMime = null;
+  PPT_DATA.dartBase64 = null;
+  PPT_DATA.dartExtraPages = [];
   document.getElementById('dart-status').style.display = 'none';
+  document.getElementById('dart-analyze-btn').style.display = 'none';
   document.getElementById('dart-zone-inner').innerHTML =
     `<div style="font-size:12px;color:var(--text-dim);padding:8px 0">⏳ 파일 처리 중...</div>`;
 
   try {
     if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-      // PDF → 첫 3페이지를 JPEG 이미지로 변환 (크기 축소)
+      // PDF → 텍스트 추출 (이미지 변환 없이 무료로 분석 가능)
       if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js 로드 실패');
       pdfjsLib.GlobalWorkerOptions.workerSrc =
         'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      const pageCount = Math.min(pdf.numPages, 3);
-      const canvases = [];
+      const pageCount = Math.min(pdf.numPages, 10);
+      const textParts = [];
 
       for (let i = 1; i <= pageCount; i++) {
         const page = await pdf.getPage(i);
-        const viewport = page.getViewport({ scale: 1.5 });
-        const canvas = document.createElement('canvas');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-        canvases.push(canvas.toDataURL('image/jpeg', 0.85));
+        const content = await page.getTextContent();
+        const pageText = content.items.map(item => item.str).join(' ').trim();
+        if (pageText) textParts.push(pageText);
       }
 
-      // 첫 페이지를 주 이미지로 사용, 나머지는 추가 컨텍스트
-      const m = canvases[0].match(/^data:([\w\/+]+);base64,(.+)$/);
-      PPT_DATA.dartMime = m[1];
-      PPT_DATA.dartBase64 = m[2];
-      PPT_DATA.dartExtraPages = canvases.slice(1).map(d => {
-        const mx = d.match(/^data:([\w\/+]+);base64,(.+)$/);
-        return { mimeType: mx[1], data: mx[2] };
-      });
+      const extracted = textParts.join('\n\n');
+      if (!extracted.trim()) throw new Error('텍스트를 추출할 수 없는 PDF입니다 (스캔본은 이미지로 업로드하세요)');
 
-      const approxKB = Math.round(PPT_DATA.dartBase64.length * 3 / 4 / 1024);
+      PPT_DATA.dartText = extracted;
       document.getElementById('dart-zone-inner').innerHTML =
         `<div style="font-size:22px;margin-bottom:4px">✅</div>
          <div style="font-size:12px;color:var(--green);font-weight:700">${file.name}</div>
-         <div style="font-size:10px;color:var(--text-dim);margin-top:3px">${pageCount}페이지 변환 완료 (~${approxKB} KB)</div>`;
+         <div style="font-size:10px;color:var(--text-dim);margin-top:3px">${pageCount}페이지 텍스트 추출 완료 (${Math.round(extracted.length/1000)}K자)</div>`;
       document.getElementById('dart-analyze-btn').style.display = 'block';
     } else {
-      // 이미지 파일
+      // 이미지 파일 (스캔본 등) → base64 전송
       const reader = new FileReader();
       await new Promise((resolve, reject) => {
         reader.onload = ev => {
@@ -6954,7 +6950,6 @@ async function processDartFile(file) {
           if (!m) { reject(new Error('파일 형식 오류')); return; }
           PPT_DATA.dartMime = m[1];
           PPT_DATA.dartBase64 = m[2];
-          PPT_DATA.dartExtraPages = [];
           resolve();
         };
         reader.onerror = reject;
@@ -6967,7 +6962,6 @@ async function processDartFile(file) {
       document.getElementById('dart-analyze-btn').style.display = 'block';
     }
   } catch(err) {
-    document.getElementById('dart-analyze-btn').style.display = 'none';
     document.getElementById('dart-zone-inner').innerHTML =
       `<div style="font-size:22px;margin-bottom:4px">⚠️</div>
        <div style="font-size:12px;color:var(--danger);font-weight:700">파일 처리 실패</div>
@@ -6981,19 +6975,21 @@ async function analyzeDart() {
   const statusEl = document.getElementById('dart-status');
   const brand = document.getElementById('dart-brand')?.value.trim() || '';
 
-  if (!PPT_DATA.dartBase64) { alert('파일을 먼저 업로드하세요'); return; }
+  if (!PPT_DATA.dartText && !PPT_DATA.dartBase64) { alert('파일을 먼저 업로드하세요'); return; }
 
   btn.disabled = true; btn.textContent = '🤖 AI 분석 중...';
   statusEl.style.display = 'block';
   statusEl.style.color = 'var(--text-sec)';
-  statusEl.textContent = '⏳ Claude AI가 DART 공시 내용을 분석하고 있습니다...';
+  statusEl.textContent = '⏳ AI가 DART 공시 내용을 분석하고 있습니다...';
 
   try {
-    const imgData = `data:${PPT_DATA.dartMime};base64,${PPT_DATA.dartBase64}`;
+    const payload = PPT_DATA.dartText
+      ? { text: PPT_DATA.dartText, brand }
+      : { image: `data:${PPT_DATA.dartMime};base64,${PPT_DATA.dartBase64}`, extraPages: PPT_DATA.dartExtraPages, brand };
     const r = await fetch('/api/dart', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: imgData, extraPages: PPT_DATA.dartExtraPages, brand })
+      body: JSON.stringify(payload)
     });
     const d = await r.json();
     if (d.error) throw new Error(d.error);

@@ -6577,10 +6577,90 @@ function daisoS6(){return _dProposal(6,'NC강서점',73,['연매출 3,000억 점
 function daisoS7(){return _dProposal(7,'2001중계점',90,['홈플러스 중계점 폐점 → 바로 옆 2001중계점 안정 무빙','동일 상권 무빙으로 안정적 매출 온보딩','전국 최고 수준 평당 효율 — 수익 매장 즉시 가능'],'적합도 90점 최고점 · 항아리 상권 + 즉시 이전 가능 구조',2);}
 function daisoS8(){return _dProposal(8,'NC중앙로역점',81,['지하1층 60평 → 상층부 대형 620평으로 이동 가능','기존 검증된 상권(월매출 3억) 기반으로 확장','중앙로역 유동인구와 다이소 고객 매칭 강도 높음'],'원도심 재생 + 신축 아파트 유입으로 상권 확장 진행 중',3);}
 function daisoS9(){return _dProposal(9,'동아백화점 강북점',77,['인근 비효율 로드샵 → 인샵 대형 평수(600평)로 무빙','유통 인프라(주차 500대)를 통한 객단가 상승','충성 고객 많은 항아리 상권 — 외부이탈 최소 구조'],'지역 브랜드 신뢰도 기반 신규 브랜드 정착 빠른 매장',4);}
+
+// ── EBG 키맨 인사이트 기반 전략 슬라이드 ──
+function _daisoEbgStrategy(num, title, priorityStores, quote, actions, effect, accent, gradIdx) {
+  return `<div class="ppt-slide" style="background:${_BG}">${_dHead(`EBG STRATEGY · 0${num}`,`전략 ${['①','②','③'][num-4]||''} ${title}`,accent)}
+  <div class="ppt-body" style="padding:14px 18px;background:${_BG};display:flex;flex-direction:column;gap:12px">
+    <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:12px;flex:1;min-height:0">
+      <div style="background:${_CARD};border-radius:14px;border:1px solid ${_BORD};padding:16px 18px;display:flex;flex-direction:column;box-shadow:${_SHADOW}">
+        <div style="font-size:8px;font-weight:700;letter-spacing:.32px;text-transform:uppercase;color:${accent};margin-bottom:8px">키맨 EBG 인사이트</div>
+        <div style="font-size:13px;color:${_BODY};line-height:1.65;font-weight:500;font-style:italic;flex:1">"${quote}"</div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px dashed ${_BORD}">
+          <div style="font-size:8px;font-weight:700;letter-spacing:.32px;text-transform:uppercase;color:${_DIM};margin-bottom:6px">우선 점포</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            ${priorityStores.map(s=>`<span style="font-size:11px;font-weight:600;color:${accent};background:#fff;padding:4px 10px;border-radius:9999px;border:1px solid ${accent}">${s}</span>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:7px">
+        <div style="font-size:8px;font-weight:700;letter-spacing:.32px;text-transform:uppercase;color:${_DIM};margin-bottom:2px">실행 방안</div>
+        ${actions.map((a,i)=>`<div style="background:${_CARD};border-radius:10px;padding:10px 14px;border:1px solid ${_BORD};border-left:3px solid ${accent};flex:1;display:flex;align-items:center;gap:12px">
+          <span style="font-size:18px;font-weight:700;color:${accent};line-height:1;flex-shrink:0;letter-spacing:-.5px">0${i+1}</span>
+          <span style="font-size:11px;color:${_BODY};line-height:1.5;font-weight:500;letter-spacing:-.1px">${a}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div style="background:linear-gradient(135deg,${_grads[gradIdx%5]});border-radius:14px;padding:12px 18px;border:1px solid ${_BORD};display:flex;align-items:center;gap:14px;flex-shrink:0">
+      <span style="font-size:9px;font-weight:700;letter-spacing:.32px;text-transform:uppercase;color:#fff;background:rgba(0,0,0,.45);padding:4px 10px;border-radius:9999px;flex-shrink:0;backdrop-filter:blur(4px)">기대 효과</span>
+      <span style="font-size:12px;font-weight:600;color:#fff;line-height:1.55;letter-spacing:-.2px;text-shadow:0 1px 3px rgba(0,0,0,.25)">${effect}</span>
+    </div>
+  </div>${_dFoot('키맨 EBG 미팅 기반 전략 — 실행 우선순위 및 기대 효과')}</div>`;
+}
+
+function daisoEbg1() {
+  return _daisoEbgStrategy(
+    4, '항아리 상권 즉시 무빙 — 1순위 점포 선점',
+    ['2001중계점 (90점)'],
+    '홈플러스 중계점 폐점으로 생긴 공간을 즉시 활용 가능합니다. 항아리 상권 구조라 개점 즉시 안정 매출이 확보되고, 동일 상권 내 무빙이라 고객 이탈 위험도 거의 없습니다. 즉시 이전 가능한 구조라 1순위로 협의를 최우선 진행해야 합니다.',
+    [
+      '2001중계점 홈플러스 폐점 공간 가용 면적 즉시 현장 확인',
+      '본사 계약 조건(임대료·계약기간·인테리어 분담) 사전 협의',
+      '동일 상권 무빙 안정성 검증을 위한 인근 매출 데이터 분석',
+      '오픈 일정 D-90 역산 — 인테리어·MD 입점 동시 진행'
+    ],
+    '월매출 3억+ 즉시 확보 · 평당 효율 전국 최고 수준 · 90점 최고 적합도',
+    _LIME, 2
+  );
+}
+
+function daisoEbg2() {
+  return _daisoEbgStrategy(
+    5, '지방 거점 동시 확보 — 대구·충북 포트폴리오',
+    ['NC중앙로역점 (80점)', 'NC청주점 (78점)'],
+    'NC중앙로역점은 기존 지하1층 60평 운영에서 검증된 월 3억 매출 기반으로 상층 620평 대형 포맷 이동이 가능합니다. NC청주점은 충북 유일 도심형 입지로 광역 집객 100만 명 배후를 확보하고 있어 두 점포를 동시 추진해 지방 거점을 확보해야 합니다.',
+    [
+      'NC중앙로역점 상층 이동 도면 공유 및 인테리어 비용 부담 협의',
+      'NC청주점 800평 독립 공간 가용성 MD 현장 실사 진행',
+      '두 점포 오픈 시점 분기 단위 동기화 — 광고·홍보 시너지',
+      '지방 거점 운영 효율화를 위한 통합 물류 라인 설계'
+    ],
+    '대구·충북 광역 상권 동시 진입 · 월매출 합산 8억+ 예상 · 지방 포트폴리오 강화',
+    _DR, 3
+  );
+}
+
+function daisoEbg3() {
+  return _daisoEbgStrategy(
+    6, '서울 커버리지 완성 — 북부·서부 순차 확장',
+    ['동아백화점 강북점 (75점)', 'NC강서점 (73점)'],
+    '동아백화점 강북점은 40~60대 충성 고객층의 안정적 항아리 상권으로 외부 이탈이 최소화된 매장입니다. NC강서점은 마곡 신흥 배후를 흡수하며 20~30대 MZ 유입이 급증세인 점포로, 두 점포 순차 확대로 서울 북부·서부 커버리지를 완성합니다.',
+    [
+      '동아백화점 강북점 1층 가용 면적 및 식품관 인접성 체크',
+      'NC강서점 외식 8·9층 연계 동선 검증 및 임대 조건 협의',
+      '북부 → 서부 순차 오픈 (6개월 간격) — 리스크 분산',
+      '서울 4대 권역(강남·강서·강북·송파) 다이소 거점 완성 로드맵 수립'
+    ],
+    '서울 북부·서부 신규 고객층 확보 · MZ + 4060 양극화 타깃 동시 공략',
+    _LIME, 4
+  );
+}
+
 const DAISO_BUILDERS = [
   {fn:daisoS1,label:'상권 제안'},{fn:daisoS2,label:'지점 제안'},
   {fn:daisoS3,label:'브랜드 분석'},
   {fn:daisoNews,label:'이슈·뉴스'},
+  {fn:daisoEbg1,label:'EBG 전략①'},{fn:daisoEbg2,label:'EBG 전략②'},{fn:daisoEbg3,label:'EBG 전략③'},
   {fn:daisoS5,label:'NC청주점'},{fn:daisoS6,label:'NC강서점'},
   {fn:daisoS7,label:'2001중계점'},{fn:daisoS8,label:'NC중앙로역점'},{fn:daisoS9,label:'동아백화점'},
 ];
@@ -7118,7 +7198,7 @@ async function generatePptContent() {
 
   PPT_DATA.generated = true;
   statusEl.style.color = 'var(--green)';
-  statusEl.textContent = '✓ PPT 생성 완료! (10장)';
+  statusEl.textContent = `✓ PPT 생성 완료! (${DAISO_BUILDERS.length}장)`;
   setTimeout(()=>{ statusEl.style.display='none'; statusEl.style.color='var(--text-sec)'; }, 2500);
   btn.disabled = false; btn.textContent = '다시 생성';
   document.getElementById('ppt-dl-btn').disabled = false;

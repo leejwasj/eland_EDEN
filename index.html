@@ -47,6 +47,20 @@ body{font-family:'Noto Sans KR',SpotifyMixUI,CircularSp-Arab,Helvetica Neue,helv
   letter-spacing:0;text-transform:none;border-bottom:2px solid transparent}
 .nb.on{color:#fff;font-weight:700;border-bottom-color:var(--green)}
 .nb:hover:not(.on){color:#fff}
+/* ── 더보기 드롭다운 ── */
+.nb-more{position:relative;display:flex;align-items:stretch}
+.nb-more-btn{padding:0 22px;height:46px;display:flex;align-items:center;gap:5px}
+.nb-more-arrow{font-size:9px;opacity:.6;transition:transform .2s}
+.nb-more.open .nb-more-arrow{transform:rotate(180deg)}
+.nb-more-menu{display:none;position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  min-width:140px;background:rgba(18,18,18,.97);border:1px solid rgba(255,255,255,.1);
+  border-radius:8px;padding:4px 0;box-shadow:0 8px 32px rgba(0,0,0,.5);z-index:300}
+.nb-more.open .nb-more-menu{display:block;animation:fadeUp .15s ease}
+.nb-more-item{display:block;width:100%;padding:10px 18px;font-size:13px;font-weight:500;
+  color:var(--text-sec);background:transparent;border:none;cursor:pointer;
+  text-align:left;white-space:nowrap;transition:color .12s,background .12s}
+.nb-more-item:hover{color:#fff;background:rgba(255,255,255,.06)}
+.nb-more-item.on{color:var(--green);font-weight:700}
 
 /* ── Layout ── */
 .main{max-width:1160px;margin:0 auto;padding:20px 14px}
@@ -768,17 +782,22 @@ footer{text-align:center;padding:22px;font-size:11px;color:var(--text-dim)}
   <span class="eden-wm">EDEN<span class="eden-dot"></span></span>
 </header>
 <nav class="nav">
-  <button class="nb on" onclick="goTab(0)">상권분석</button>
-  <button class="nb" onclick="goTab(1)">점포→브랜드</button>
-  <button class="nb" onclick="goTab(2)" style="display:none">스코어링</button>
-  <button class="nb" onclick="goTab(3)">브랜드→점포</button>
-  <button class="nb" onclick="goTab(4)">브랜드 현황</button>
-  <button class="nb" onclick="goTab(5)">키워드 분석</button>
-  <button class="nb" onclick="goTab(6)">온라인 채널</button>
-  <button class="nb" onclick="goTab(7)" style="display:none">온라인 베스트</button>
-  <button class="nb" onclick="goTab(8)">키맨 EBG</button>
-  <button class="nb" onclick="goTab(9)">전략 PPT</button>
-  <button class="nb" onclick="goTab(10)">DART 분석</button>
+  <button class="nb on" data-tab="0" onclick="goTab(0)">상권분석</button>
+  <button class="nb" data-tab="2" onclick="goTab(2)" style="display:none">스코어링</button>
+  <button class="nb" data-tab="4" onclick="goTab(4)">브랜드 현황</button>
+  <button class="nb" data-tab="5" onclick="goTab(5)">키워드 분석</button>
+  <button class="nb" data-tab="6" onclick="goTab(6)">온라인 채널</button>
+  <button class="nb" data-tab="7" onclick="goTab(7)" style="display:none">온라인 베스트</button>
+  <button class="nb" data-tab="8" onclick="goTab(8)">키맨 EBG</button>
+  <button class="nb" data-tab="9" onclick="goTab(9)">전략 PPT</button>
+  <button class="nb" data-tab="10" onclick="goTab(10)">DART 분석</button>
+  <div class="nb-more" id="nb-more">
+    <button class="nb nb-more-btn" data-tab="more" onclick="toggleMore(event)">더보기 <span class="nb-more-arrow">▼</span></button>
+    <div class="nb-more-menu">
+      <button class="nb-more-item" id="more-item-1" onclick="goTab(1);closeMore()">점포→브랜드</button>
+      <button class="nb-more-item" id="more-item-3" onclick="goTab(3);closeMore()">브랜드→점포</button>
+    </div>
+  </div>
 </nav>
 
 <main class="main">
@@ -2307,13 +2326,28 @@ function lv(t){document.getElementById('lvtxt').textContent=t;document.getElemen
 function hlv(){document.getElementById('lov').classList.remove('on')}
 function goTab(n){
   document.querySelectorAll('.tsec').forEach((s,i)=>s.classList.toggle('on',i===n));
-  document.querySelectorAll('.nb').forEach((b,i)=>b.classList.toggle('on',i===n));
+  document.querySelectorAll('.nb[data-tab]').forEach(b=>{
+    const t=b.dataset.tab;
+    b.classList.toggle('on',t===String(n)||(t==='more'&&(n===1||n===3)));
+  });
+  document.getElementById('more-item-1').classList.toggle('on',n===1);
+  document.getElementById('more-item-3').classList.toggle('on',n===3);
   if(n===4){renderBrandOverview();renderContentOverview();}
   if(n===6)renderOnlineChannel();
   if(n===7)renderOnlineBest();
   if(n===8)initEbgTab();
   if(n===9)initPptTab();
 }
+function toggleMore(e){
+  e.stopPropagation();
+  document.getElementById('nb-more').classList.toggle('open');
+}
+function closeMore(){
+  document.getElementById('nb-more').classList.remove('open');
+}
+document.addEventListener('click',function(e){
+  if(!document.getElementById('nb-more').contains(e.target))closeMore();
+});
 
 function dtab(t){
   document.getElementById('dt1').classList.toggle('on',t==='k');
